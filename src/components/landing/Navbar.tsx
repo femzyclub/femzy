@@ -14,6 +14,7 @@ const links = [
   { href: "/#prize", label: "Prize" },
   { href: "/#rules", label: "Rules" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/events", label: "Events" },
   { href: "/#community", label: "Community" },
 ];
 
@@ -29,7 +30,7 @@ export function Navbar({ fee }: { fee: number }) {
 
         <ul className="hidden items-center gap-8 lg:flex">
           {links.map((l) => {
-            const active = l.href === pathname;
+            const active = l.href === pathname || (l.href === "/events" && pathname.startsWith("/events"));
             return (
               <li key={l.href}>
                 <Link href={l.href} className="group relative py-2 text-[15px] font-medium text-ink">

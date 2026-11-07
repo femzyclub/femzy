@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import clsx from "clsx";
-import { Logo } from "@/components/brand/Logo";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { reviewPayment } from "./actions";
 
@@ -68,12 +68,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="border-b-2 border-ink bg-fr-warm">
-        <div className="container-x flex h-[72px] items-center justify-between">
-          <Logo size={52} />
-          <span className="rounded-full border-2 border-ink bg-fr-yellow px-3 py-1 text-[13px] font-bold">Admin · Payments</span>
-        </div>
-      </header>
+      <AdminHeader active="payments" />
 
       <main className="container-x max-w-4xl pt-8">
         <h1 className="h-display text-4xl sm:text-5xl">UPI payments</h1>

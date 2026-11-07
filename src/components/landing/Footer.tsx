@@ -37,7 +37,7 @@ export function Footer({ fee, cta = true }: { fee?: number; cta?: boolean }) {
             <p className="mt-4 max-w-[240px] text-[15px] text-fr-charcoal">A community for women who play. Mid-Winter Arc — 21 Day Challenge.</p>
           </div>
           <FooterCol title="Challenge" links={[["/#how-it-works", "How it works"], ["/#prize", "Prize"], ["/#rules", "Rules"], ["/#prize-terms", "Prize terms"]]} />
-          <FooterCol title="Community" links={[["/leaderboard", "Leaderboard"], ["/#community", "Participants"], ["/#referrals", "Referrals"]]} />
+          <FooterCol title="Community" links={[["/leaderboard", "Leaderboard"], ["/events", "Events"], ["/events/calendar", "Events calendar"], ["/#community", "Participants"], ["/#referrals", "Referrals"]]} />
           <FooterCol title="Account" links={[["/join", "Join"], ["/login", "Log in"], ["/dashboard", "Dashboard"]]} />
         </div>
         <Squiggle className="container-x block h-4 w-full opacity-30" />

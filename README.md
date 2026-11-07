@@ -41,6 +41,17 @@ If you ran schema.sql before this was added, also run `supabase/migrations/002_g
 3. Participants pay ₹99, then submit the UPI transaction ID (UTR) + screenshot on /join.
 4. Admins open **/admin/payments**, match the UTR with the GPay/bank statement and click Approve — the participant becomes active.
 
+## Events (listing, registration, calendar)
+
+1. Supabase → SQL Editor → paste `supabase/migrations/004_events.sql` → Run (once; safe on the live database — it only adds new tables).
+2. Admins: open **/admin/events** to create, publish, edit, cancel or delete events, manage participants, approve UPI payments and export CSV.
+3. Public pages: **/events** (featured / upcoming / past, search + category filter), **/events/<event-url>** (details + registration) and **/events/calendar** (month + list view).
+
+- Guests can register without an account; signed-in members get their details pre-filled.
+- Free events are confirmed instantly. Paid events use the same GPay / UPI QR as the challenge: the visitor submits the UTR + screenshot, the seat is held, and an admin approves or rejects it on the event's page.
+- Capacity, deadline, duplicate and UTR checks run inside the database function `register_for_event()`, which locks the event row, so seats can't be oversold even with simultaneous registrations.
+- Every registration gets an ID like `FRE-7K2Q9XMD`. There is no email service in this project yet, so confirmations are shown on screen only.
+
 ## What still needs a decision from Fem Rise Club
 
 - **Daily check-in deadline**: `challenges.checkin_deadline` is empty on purpose. Until it's set, nobody gets marked as missed.

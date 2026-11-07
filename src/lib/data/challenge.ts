@@ -70,7 +70,13 @@ export async function getLandingData(): Promise<LandingData> {
     .eq("slug", env.challengeSlug)
     .maybeSingle<ChallengeRow>();
   if (error || !challenge) {
-    console.error("[landing] challenge not found, using demo data", error?.message);
+    // warn (not error) so the dev overlay doesn't pop up when Supabase is unreachable or the challenge row is missing
+    console.warn(
+      error?.message?.includes("fetch failed")
+        ? "[landing] can't reach Supabase (check NEXT_PUBLIC_SUPABASE_URL, your internet, or whether the project is paused) — showing demo data"
+        : "[landing] challenge not found, using demo data",
+      error?.message ?? "",
+    );
     return demo;
   }
 
