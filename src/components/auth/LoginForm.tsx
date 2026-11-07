@@ -50,10 +50,11 @@ export function LoginForm({ next, supabaseReady, oauthError = false }: { next: s
         {busy && <Loader2 className="h-4 w-4 animate-spin" />} Log in
       </button>
       <p className="text-center text-sm text-fr-muted">
-        New here?{" "}
-        <Link href="/join" className="font-bold text-ink underline decoration-fr-yellow decoration-[3px] underline-offset-4">
-          Join the challenge
-        </Link>
+        New here? You don&apos;t need an account to join an event —{" "}
+        <Link href="/events" className="font-bold text-ink underline decoration-fr-yellow decoration-[3px] underline-offset-4">
+          browse events
+        </Link>{" "}
+        and register as a guest.
       </p>
     </form>
   );

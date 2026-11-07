@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Refreshes the Supabase session cookie on every request and protects
- * participant (/dashboard) and admin (/admin) areas. Admin role is
+ * the admin (/admin) area. Admin role is
  * re-checked server-side on every admin page and by RLS in the database.
  */
 export async function middleware(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const needsAuth = path.startsWith("/dashboard") || path.startsWith("/admin");
+  const needsAuth = path.startsWith("/admin");
   if (needsAuth && !user) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
@@ -41,5 +41,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|brand|favicon.ico|api/payments/webhook).*)"],
+  matcher: ["/((?!_next/static|_next/image|brand|favicon.ico).*)"],
 };

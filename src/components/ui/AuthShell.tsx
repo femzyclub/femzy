@@ -15,18 +15,18 @@ export function AuthShell({ children, title, kicker }: { children: React.ReactNo
         </div>
         <div className="relative">
           <p className="h-display text-7xl">
-            21 Days.
+            Find your
             <br />
-            One <span className="font-hand font-normal text-white" style={{ WebkitTextStroke: "2px #0B0B0B" }}>Streak!</span>
+            <span className="font-hand font-normal text-white" style={{ WebkitTextStroke: "2px #0B0B0B" }}>game!</span>
           </p>
-          <p className="mt-4 text-lg font-bold">Your sport. Your streak. Your challenge.</p>
+          <p className="mt-4 text-lg font-bold">Runs, tournaments, workshops and meetups for women who play.</p>
         </div>
         <div className="relative flex items-end gap-4">
           <Sticker color="#DCE8FF" rotate={-6}>
-            ₹99 entry
+            Any sport
           </Sticker>
           <Sticker color="#E5F4DF" rotate={5}>
-            ₹30K prize
+            Every level
           </Sticker>
           <Arrow variant="up" className="h-12 w-16" />
         </div>

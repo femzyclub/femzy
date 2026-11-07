@@ -10,16 +10,14 @@ import { Burst } from "@/components/doodle/Doodles";
 
 const links = [
   { href: "/", label: "Home" },
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#prize", label: "Prize" },
-  { href: "/#rules", label: "Rules" },
-  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/events", label: "Events" },
-  { href: "/#community", label: "Community" },
+  { href: "/events/calendar", label: "Calendar" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#about", label: "About" },
 ];
 
 /** Warm-white navbar that stays the same colour on scroll — no dark bar, no bottom line. */
-export function Navbar({ fee }: { fee: number }) {
+export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -30,7 +28,7 @@ export function Navbar({ fee }: { fee: number }) {
 
         <ul className="hidden items-center gap-8 lg:flex">
           {links.map((l) => {
-            const active = l.href === pathname || (l.href === "/events" && pathname.startsWith("/events"));
+            const active = l.href === pathname || (l.href === "/events" && pathname.startsWith("/events/") && pathname !== "/events/calendar");
             return (
               <li key={l.href}>
                 <Link href={l.href} className="group relative py-2 text-[15px] font-medium text-ink">
@@ -60,8 +58,8 @@ export function Navbar({ fee }: { fee: number }) {
             Log in
           </Link>
           <span className="relative hidden sm:inline-flex">
-            <Link href="/join" className="btn-primary !px-6 !py-3">
-              Join — ₹{fee}
+            <Link href="/events" className="btn-primary !px-6 !py-3">
+              Explore events
             </Link>
             <Burst className="absolute -right-6 -top-4 h-7 w-7 -rotate-45" />
           </span>
@@ -103,8 +101,8 @@ export function Navbar({ fee }: { fee: number }) {
                 <Link href="/login" onClick={() => setOpen(false)} className="btn-outline">
                   Log in
                 </Link>
-                <Link href="/join" onClick={() => setOpen(false)} className="btn-primary">
-                  Join — ₹{fee}
+                <Link href="/events" onClick={() => setOpen(false)} className="btn-primary">
+                  Explore events
                 </Link>
               </li>
             </ul>

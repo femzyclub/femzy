@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /** "Continue with Google" — Supabase OAuth. After Google, the user lands on /auth/callback, then `next`. */
-export function GoogleButton({ next = "/join", onError, label = "Continue with Google" }: { next?: string; onError?: (msg: string) => void; label?: string }) {
+export function GoogleButton({ next = "/", onError, label = "Continue with Google" }: { next?: string; onError?: (msg: string) => void; label?: string }) {
   const [busy, setBusy] = useState(false);
 
   async function signIn() {

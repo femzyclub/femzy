@@ -9,7 +9,7 @@ import { Blob } from "@/components/doodle/Doodles";
 import { CategoryChip, EventCover, StateChip } from "@/components/events/EventBits";
 import { RegistrationForm } from "@/components/events/RegistrationForm";
 import { env } from "@/lib/env";
-import { getNavFee, getPublicEventBySlug } from "@/lib/events/data";
+import { getPublicEventBySlug } from "@/lib/events/data";
 import { feeLabel, registrationState, seatsLeft } from "@/lib/events/shared";
 import { formatDateTime, formatRange, tzLabel } from "@/lib/events/time";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EventPage({ params }: Props) {
   const { slug } = await params;
-  const [{ event, isDemo }, fee] = await Promise.all([getPublicEventBySlug(slug), getNavFee()]);
+  const { event, isDemo } = await getPublicEventBySlug(slug);
   if (!event) notFound();
 
   // Signed-in member? Pre-fill the form and show an existing registration.
@@ -104,7 +104,7 @@ export default async function EventPage({ params }: Props) {
     <>
       {isDemo && <DemoBanner />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <Navbar fee={fee} />
+      <Navbar />
       <main className="relative overflow-hidden pb-24 pt-[72px] lg:pt-[84px]">
         <Blob seed={5} color="#FBBE18" className="absolute -right-32 top-10 w-[460px] opacity-90" />
         <div className="container-x relative pt-8">
@@ -232,7 +232,7 @@ export default async function EventPage({ params }: Props) {
           </section>
         </div>
       </main>
-      <Footer fee={fee} cta={false} />
+      <Footer cta={false} />
     </>
   );
 }

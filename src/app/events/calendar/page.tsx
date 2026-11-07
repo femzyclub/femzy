@@ -5,7 +5,7 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { Blob } from "@/components/doodle/Doodles";
 import { EventsCalendar } from "@/components/events/EventsCalendar";
 import { EventsTabs } from "@/components/events/EventBits";
-import { getNavFee, getPublicEventsInRange } from "@/lib/events/data";
+import { getPublicEventsInRange } from "@/lib/events/data";
 import { monthRangeUtc, todayKey } from "@/lib/events/time";
 import type { CalendarEvent } from "@/lib/events/types";
 
@@ -31,12 +31,11 @@ export default async function EventsCalendarPage() {
   } catch (e) {
     console.warn("[events] calendar initial load failed", e);
   }
-  const fee = await getNavFee();
 
   return (
     <>
       {isDemo && <DemoBanner />}
-      <Navbar fee={fee} />
+      <Navbar />
       <main className="pt-[72px] lg:pt-[84px]">
         <section className="relative overflow-hidden pb-8 pt-16 lg:pt-20">
           <Blob seed={23} color="#1748E8" wobble={0.35} className="absolute -right-10 top-6 w-40 sm:w-56" />
@@ -58,7 +57,7 @@ export default async function EventsCalendarPage() {
           <EventsCalendar initialMonth={today.slice(0, 7)} today={today} initialEvents={initial} />
         </section>
       </main>
-      <Footer fee={fee} cta={false} />
+      <Footer cta={false} />
     </>
   );
 }

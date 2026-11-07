@@ -1,48 +1,47 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { SportsMarquee } from "@/components/landing/SportsMarquee";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { ChallengeSection } from "@/components/landing/ChallengeSection";
-import { PrizeSection } from "@/components/landing/PrizeSection";
-import { RulesSection } from "@/components/landing/RulesSection";
-import { ReferralSection } from "@/components/landing/ReferralSection";
-import { CommunitySection } from "@/components/landing/CommunitySection";
-import { LeaderboardPreview } from "@/components/landing/LeaderboardPreview";
 import { EventsSection } from "@/components/landing/EventsSection";
-import { getPublicEvents } from "@/lib/events/data";
+import { CategoriesSection } from "@/components/landing/CategoriesSection";
+import { CalendarSection } from "@/components/landing/CalendarSection";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { AboutSection } from "@/components/landing/AboutSection";
 import { Footer } from "@/components/landing/Footer";
-import { MobileJoinBar } from "@/components/landing/MobileJoinBar";
+import { MobileExploreBar } from "@/components/landing/MobileExploreBar";
 import { DemoBanner } from "@/components/DemoBanner";
-import { getLandingData } from "@/lib/data/challenge";
-import { env } from "@/lib/env";
+import { getPublicEvents, toCalendarEvent } from "@/lib/events/data";
+import { eventDateKeys, todayKey } from "@/lib/events/time";
 
-// Leaderboard and counts refresh every minute.
+// Admin changes refresh this page instantly; this is the safety net.
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [{ settings, leaderboard, community, participantCount, isDemo }, { events }] = await Promise.all([getLandingData(), getPublicEvents()]);
+  const { events, isDemo } = await getPublicEvents();
   const now = Date.now();
-  const fee = settings.registrationFee;
-  const cities = Array.from(new Set(leaderboard.map((r) => r.city).filter((c): c is string => Boolean(c))));
+  const upcoming = events
+    .filter((e) => e.status === "published" && new Date(e.endsAt).getTime() >= now)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+
+  // Calendar opens on this month (IST) with this month's events already loaded.
+  const today = todayKey();
+  const month = today.slice(0, 7);
+  const monthEvents = events.filter((e) => eventDateKeys(e.startsAt, e.endsAt, e.timezone).some((k) => k.startsWith(month))).map(toCalendarEvent);
 
   return (
     <>
       {isDemo && <DemoBanner />}
-      <Navbar fee={fee} />
+      <Navbar />
       <main>
-        <Hero fee={fee} startDate={settings.startDate} participantCount={participantCount} avatars={leaderboard} />
+        <Hero upcoming={upcoming} upcomingCount={upcoming.length} />
         <SportsMarquee />
-        <HowItWorks fee={fee} />
-        <ChallengeSection duration={settings.durationDays} />
-        <PrizeSection prizeText={settings.prizeText} prizeTerms={settings.prizeTerms} />
-        <RulesSection rules={settings.rules} guidelines={settings.communityGuidelines} />
-        <ReferralSection referralPoints={settings.referralPoints} siteUrl={env.siteUrl} />
-        <CommunitySection cards={community} participantCount={participantCount} cities={cities} />
         <EventsSection events={events} now={now} />
-        <LeaderboardPreview rows={leaderboard.slice(0, 5)} />
+        <CategoriesSection events={events} now={now} />
+        <CalendarSection initialMonth={month} today={today} events={monthEvents} />
+        <HowItWorks />
+        <AboutSection />
       </main>
-      <Footer fee={fee} />
-      <MobileJoinBar fee={fee} />
+      <Footer />
+      <MobileExploreBar />
     </>
   );
 }

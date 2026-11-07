@@ -11,13 +11,13 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Femrise! — Mid-Winter Arc · 21 Day Challenge",
+  title: "Femrise! — Events for women who play",
   description:
-    "21 days. One streak. One final on-ground round. Play your sport, post your daily check-in, climb the leaderboard and compete to win ₹30,000 prize money.",
+    "Runs, tournaments, workshops and meetups for women who play. Find upcoming Fem Rise Club events, check the calendar and register online.",
   icons: { icon: "/brand/femrise-logo.png" },
   openGraph: {
-    title: "Femrise! — Mid-Winter Arc · 21 Day Challenge",
-    description: "Your sport. Your streak. Your challenge. ₹99 entry.",
+    title: "Femrise! — Events for women who play",
+    description: "Find your game. Find your people. Upcoming Fem Rise Club events and calendar.",
     images: ["/brand/femrise-logo.png"],
   },
 };

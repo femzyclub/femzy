@@ -1,13 +1,13 @@
 import { SPORTS } from "@/lib/defaults";
 
-const items = SPORTS.filter((s) => s !== "Other");
+const items = SPORTS;
 const dots = ["bg-fr-blue", "bg-fr-green", "bg-fr-orange", "bg-ink"];
 
-/** Slightly tilted yellow "tape" ticker — any sport counts. */
+/** Slightly tilted yellow "tape" ticker — sports we play. */
 export function SportsMarquee() {
   const row = [...items, ...items];
   return (
-    <div className="relative z-10 -my-2 -rotate-[1.5deg] overflow-hidden border-y-2 border-ink bg-fr-yellow py-3" aria-label="Sports that count">
+    <div className="relative z-10 -my-2 -rotate-[1.5deg] overflow-hidden border-y-2 border-ink bg-fr-yellow py-3" aria-label="Sports we play">
       <div className="flex w-max animate-marquee gap-8 whitespace-nowrap">
         {row.map((s, i) => (
           <span key={i} className="flex items-center gap-8 font-display text-xl font-bold uppercase sm:text-2xl">

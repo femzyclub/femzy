@@ -5,7 +5,7 @@ import { Reveal } from "@/components/ui/motion";
 import { Blob, Squiggle } from "@/components/doodle/Doodles";
 
 /** Final call-to-action + footer. Set `cta={false}` on inner pages. */
-export function Footer({ fee, cta = true }: { fee?: number; cta?: boolean }) {
+export function Footer({ cta = true }: { cta?: boolean }) {
   return (
     <footer className="relative overflow-hidden">
       {cta && (
@@ -16,29 +16,34 @@ export function Footer({ fee, cta = true }: { fee?: number; cta?: boolean }) {
           <Blob seed={13} color="#62B946" wobble={0.35} className="absolute bottom-6 left-[6%] hidden w-40 sm:block" />
           <Blob seed={17} color="#1748E8" wobble={0.35} className="absolute right-[8%] top-8 hidden w-32 sm:block" />
           <Reveal className="container-x relative">
-            <span className="eyebrow !bg-none bg-white">Ready to start your streak?</span>
+            <span className="eyebrow !bg-none bg-white">Your next game is waiting</span>
             <h2 className="h-display mx-auto mt-6 max-w-4xl text-5xl sm:text-7xl lg:text-8xl">
-              21 days. One streak.
+              Pick an event.
               <br />
-              <span className="font-hand font-normal">Win ₹30,000 prize money!</span>
+              <span className="font-hand font-normal">Bring a friend!</span>
             </h2>
-            <div className="mt-10 flex justify-center">
-              <ButtonLink href="/join">Join the challenge — ₹{fee ?? 99}</ButtonLink>
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
+              <ButtonLink href="/events" burst>
+                Explore events
+              </ButtonLink>
+              <ButtonLink href="/events/calendar" variant="outline" className="bg-white">
+                Open the calendar
+              </ButtonLink>
             </div>
-            <p className="mt-6 text-lg font-bold">Show up. Play your sport. Protect your streak.</p>
+            <p className="mt-6 text-lg font-bold">Any sport. Every level. Always welcome.</p>
           </Reveal>
         </div>
       )}
 
       <div className="border-t-2 border-ink bg-fr-warm">
-        <div className="container-x grid gap-10 pb-28 pt-14 sm:pb-12 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="container-x grid gap-10 pb-12 pt-14 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Logo size={84} />
-            <p className="mt-4 max-w-[240px] text-[15px] text-fr-charcoal">A community for women who play. Mid-Winter Arc — 21 Day Challenge.</p>
+            <p className="mt-4 max-w-[260px] text-[15px] text-fr-charcoal">A community for women who play — runs, tournaments, workshops and meetups.</p>
           </div>
-          <FooterCol title="Challenge" links={[["/#how-it-works", "How it works"], ["/#prize", "Prize"], ["/#rules", "Rules"], ["/#prize-terms", "Prize terms"]]} />
-          <FooterCol title="Community" links={[["/leaderboard", "Leaderboard"], ["/events", "Events"], ["/events/calendar", "Events calendar"], ["/#community", "Participants"], ["/#referrals", "Referrals"]]} />
-          <FooterCol title="Account" links={[["/join", "Join"], ["/login", "Log in"], ["/dashboard", "Dashboard"]]} />
+          <FooterCol title="Events" links={[["/events", "All events"], ["/events/calendar", "Events calendar"], ["/#coming-up", "Coming up next"]]} />
+          <FooterCol title="Community" links={[["/#how-it-works", "How it works"], ["/#about", "About Fem Rise Club"], ["/#categories", "What we play"]]} />
+          <FooterCol title="Account" links={[["/login", "Log in"]]} />
         </div>
         <Squiggle className="container-x block h-4 w-full opacity-30" />
         <div className="container-x flex flex-col gap-2 py-5 text-[13px] text-fr-muted sm:flex-row sm:justify-between">

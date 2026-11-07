@@ -5,10 +5,11 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { Blob, Sticker } from "@/components/doodle/Doodles";
 import { EventsBrowser } from "@/components/events/EventsBrowser";
 import { EventsTabs } from "@/components/events/EventBits";
-import { getNavFee, getPublicEvents } from "@/lib/events/data";
+import { getPublicEvents } from "@/lib/events/data";
+import { EVENT_CATEGORIES } from "@/lib/events/types";
 
-// Admin changes revalidate this page instantly; this is only the safety net.
-export const revalidate = 60;
+// Rendered per request (it reads ?category=), always with live data.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Events — Femrise!",
@@ -21,15 +22,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function EventsPage() {
-  const [{ events, isDemo }, fee] = await Promise.all([getPublicEvents(), getNavFee()]);
+export default async function EventsPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+  const { category } = await searchParams;
+  const initialCategory = (EVENT_CATEGORIES as readonly string[]).includes(category ?? "") ? category! : null;
+  const { events, isDemo } = await getPublicEvents();
   const now = Date.now();
   const upcomingCount = events.filter((e) => new Date(e.endsAt).getTime() >= now && e.status === "published").length;
 
   return (
     <>
       {isDemo && <DemoBanner />}
-      <Navbar fee={fee} />
+      <Navbar />
       <main className="pt-[72px] lg:pt-[84px]">
         <section className="relative overflow-hidden pb-10 pt-16 lg:pt-20">
           <Blob seed={7} color="#FBBE18" className="absolute -right-24 -top-10 w-[520px]" />
@@ -51,10 +54,10 @@ export default async function EventsPage() {
           </div>
         </section>
         <section className="container-x pb-24">
-          <EventsBrowser events={events} now={now} />
+          <EventsBrowser events={events} now={now} initialCategory={initialCategory} />
         </section>
       </main>
-      <Footer fee={fee} cta={false} />
+      <Footer cta={false} />
     </>
   );
 }

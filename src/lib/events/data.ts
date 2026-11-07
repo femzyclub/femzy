@@ -1,6 +1,5 @@
 import "server-only";
 import { cache } from "react";
-import { DEFAULT_SETTINGS } from "@/lib/defaults";
 import { env } from "@/lib/env";
 import { createSupabasePublicClient } from "@/lib/supabase/server";
 import { EVENT_CATEGORIES, FORM_FIELD_TYPES } from "@/lib/events/types";
@@ -173,14 +172,6 @@ export async function getPublicEventsInRange(from: Date, to: Date): Promise<{ ev
   }
   return { events: (data as EventRow[]).map(mapEvent).map(toCalendarEvent), isDemo: false };
 }
-
-/** The challenge entry fee, for the "Join — ₹99" button in the shared navbar. */
-export const getNavFee = cache(async () => {
-  const supabase = createSupabasePublicClient();
-  if (!supabase) return DEFAULT_SETTINGS.registrationFee;
-  const { data } = await supabase.from("challenges").select("registration_fee").eq("slug", env.challengeSlug).maybeSingle();
-  return (data?.registration_fee as number | undefined) ?? DEFAULT_SETTINGS.registrationFee;
-});
 
 // ---------------------------------------------------------------------------
 // Demo events — shown ONLY when Supabase isn't connected (with the "Demo data" badge).

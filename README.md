@@ -1,75 +1,63 @@
-# Fem Rise Club — Mid-Winter Arc · 21 Day FemRise Challenge
+# Fem Rise Club — Events for women who play
 
-Next.js 15 (App Router) · Tailwind CSS · Framer Motion · Supabase · Razorpay
+Next.js 15 (App Router) · Tailwind CSS · Framer Motion · Supabase
+
+The site is built around **events**: an events listing, a page per event with online registration, a live monthly calendar, and an admin dashboard to manage it all.
 
 ## Run it
 
 ```bash
 npm install
-cp .env.example .env.local   # optional — without keys the site runs on demo data
+cp .env.example .env.local   # optional — without keys the site runs on sample events
 npm run dev
 ```
 
 Open http://localhost:3000
 
+## Pages
+
+| Page | What it is |
+| --- | --- |
+| `/` | Home: next events, categories, live calendar, how it works, about |
+| `/events` | All events — featured, upcoming, past, search + category filter (`/events?category=Sports`) |
+| `/events/<event-url>` | Event details + registration form |
+| `/events/calendar` | Monthly calendar (month view + list view) |
+| `/login` | Log in (admins, and members who want their details pre-filled) |
+| `/admin/events` | Admin: analytics, create / edit / publish / cancel / delete events, participants, payments, CSV export |
+
 ## Connect the backend (Supabase)
 
 1. Create a project at supabase.com (region: Mumbai).
-2. SQL Editor → paste `supabase/schema.sql` → Run. This creates all tables, security rules (RLS), streak/points logic, storage buckets and the first challenge. On a fresh project run only `schema.sql` — the files in `supabase/migrations` are only for databases created before those changes.
-3. Authentication → Providers → Email: turn **Confirm email** off for the smoothest signup → payment flow (or keep it on; the flow handles both).
-4. Copy the URL, anon key and service role key into `.env.local`.
-5. Sign up on the site, then make yourself admin in the SQL editor:
+2. SQL Editor → run `supabase/schema.sql` (accounts, profiles, admin role, security helpers), then `supabase/migrations/004_events.sql` (events + registrations).
+   On the existing Femrise project only `004_events.sql` is needed.
+3. Copy the URL, anon key and service role key into `.env.local` (and Vercel).
+4. Sign up / log in on the site, then make yourself admin in the SQL editor:
    `update profiles set role = 'admin' where username = 'your_username';`
-6. Database → Extensions → enable `pg_cron`, then run the `cron.schedule(...)` line at the bottom of `schema.sql`.
+
+`schema.sql` also contains the tables from the old 21-day challenge. The website no longer uses them; they're harmless and can stay.
 
 ## Google sign-in
 
-1. Google Cloud Console → APIs & Services → OAuth consent screen → External → app name "Femrise!", support email → save.
-2. Credentials → Create credentials → OAuth client ID → Web application.
-   - Authorized JavaScript origins: `http://localhost:3000` (+ your live domain later)
-   - Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`
-3. Supabase → Authentication → Sign In / Providers → Google → enable, paste the Client ID and Client Secret.
-4. Supabase → Authentication → URL Configuration → Site URL `http://localhost:3000`; Redirect URLs: `http://localhost:3000/auth/callback` (+ `https://<domain>/auth/callback`).
+1. Google Cloud Console → OAuth consent screen → External → app name "Femrise!".
+2. Credentials → OAuth client ID → Web application. Redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`.
+3. Supabase → Authentication → Providers → Google → paste Client ID + Secret.
+4. Supabase → Authentication → URL Configuration → add `https://<domain>/auth/callback` (and `http://localhost:3000/auth/callback`).
 
-Google users are asked for username, phone, city and sport on /join before paying.
-If you ran schema.sql before this was added, also run `supabase/migrations/002_google_auth.sql`.
+## Event registration & payments
 
-## Payments (GPay / UPI QR)
-
-1. Save the GPay QR image as `public/payments/upi-qr.png`.
-2. Add `NEXT_PUBLIC_UPI_ID` (e.g. `femrise@okaxis`) and `NEXT_PUBLIC_UPI_NAME` to `.env.local` and Vercel.
-3. Participants pay ₹99, then submit the UPI transaction ID (UTR) + screenshot on /join.
-4. Admins open **/admin/payments**, match the UTR with the GPay/bank statement and click Approve — the participant becomes active.
-
-## Events (listing, registration, calendar)
-
-1. Supabase → SQL Editor → paste `supabase/migrations/004_events.sql` → Run (once; safe on the live database — it only adds new tables).
-2. Admins: open **/admin/events** to create, publish, edit, cancel or delete events, manage participants, approve UPI payments and export CSV.
-3. Public pages: **/events** (featured / upcoming / past, search + category filter), **/events/<event-url>** (details + registration) and **/events/calendar** (month + list view).
-
-- Guests can register without an account; signed-in members get their details pre-filled.
-- Free events are confirmed instantly. Paid events use the same GPay / UPI QR as the challenge: the visitor submits the UTR + screenshot, the seat is held, and an admin approves or rejects it on the event's page.
+- Guests can register without an account; logged-in members get their details pre-filled.
+- Free events are confirmed instantly. Paid events use the GPay / UPI QR in `public/payments/`: the visitor submits the UTR + screenshot, the seat is held, and an admin approves or rejects it on the event's admin page.
 - Capacity, deadline, duplicate and UTR checks run inside the database function `register_for_event()`, which locks the event row, so seats can't be oversold even with simultaneous registrations.
-- Every registration gets an ID like `FRE-7K2Q9XMD`. There is no email service in this project yet, so confirmations are shown on screen only.
-
-## What still needs a decision from Fem Rise Club
-
-- **Daily check-in deadline**: `challenges.checkin_deadline` is empty on purpose. Until it's set, nobody gets marked as missed.
-- **Missed day without Restore**: `unrestored_miss_policy` is `eliminate` by default (the Restore window lasts until the next day's deadline). It can be switched to `reset_streak`.
-- Start date, points values, prize terms and community guidelines: all live in the `challenges` table and will be editable from the admin dashboard.
+- Every registration gets an ID like `FRE-7K2Q9XMD`. There is no email service yet, so confirmations are shown on screen.
 
 ## Structure
 
 ```
-src/app                  pages + API routes (payments, cron)
-src/components/landing   landing page sections
-src/components/join      signup → payment flow, login
-src/lib                  env, types, defaults, data loaders, Supabase + Razorpay helpers
-supabase/schema.sql      database, RLS, streak / restore / elimination logic
-public/brand             logo files (dark + light versions)
+src/app                  pages + API routes (events, registration, auth callback)
+src/components/landing   home page sections, navbar, footer
+src/components/events    event cards, registration form, calendar
+src/components/admin     admin header, event form, admin forms
+src/lib/events           event types, data loaders, timezone helpers
+supabase/                schema.sql + migrations (004_events.sql = events)
+public/brand             logo files
 ```
-
-## Build status
-
-- Done: landing page (dark editorial grid, halftone, dot-matrix numerals, line art, India map), leaderboard, signup + ₹99 payment flow, login, dashboard (streak, calendar, stats), full database + security + payment webhooks.
-- Next: daily snap upload, My Snaps, community feed + follow system, restore screen, bottom navigation, admin dashboard.

@@ -3,13 +3,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * OAuth return URL (Google → Supabase → here). Exchanges the one-time code for a session cookie,
- * then sends the user on to `next` (defaults to /join, which asks new Google users for their challenge details).
+ * then sends the user on to `next` (defaults to the home page).
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const nextParam = url.searchParams.get("next") ?? "/join";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/join";
+  const nextParam = url.searchParams.get("next") ?? "/";
+  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
 
   if (code) {
     const supabase = await createSupabaseServerClient();

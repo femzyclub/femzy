@@ -3,11 +3,10 @@ import clsx from "clsx";
 import { Logo } from "@/components/brand/Logo";
 
 const TABS = [
-  { key: "payments", href: "/admin/payments", label: "Payments" },
   { key: "events", href: "/admin/events", label: "Events" },
 ] as const;
 
-/** Shared header for the admin dashboard (same look as the original payments header, plus module tabs). */
+/** Shared header for the admin dashboard. Add a tab here when a new admin module is added. */
 export function AdminHeader({ active }: { active: (typeof TABS)[number]["key"] }) {
   return (
     <header className="border-b-2 border-ink bg-fr-warm">

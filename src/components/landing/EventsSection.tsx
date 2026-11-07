@@ -9,20 +9,20 @@ export function EventsSection({ events, now }: { events: EventItem[]; now: numbe
   const upcoming = events
     .filter((e) => e.status === "published" && new Date(e.endsAt).getTime() >= now)
     .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || a.startsAt.localeCompare(b.startsAt))
-    .slice(0, 3);
+    .slice(0, 6);
 
   return (
-    <section id="events" className="scroll-mt-24 py-24 lg:py-32">
+    <section id="coming-up" className="scroll-mt-24 py-24 lg:py-32">
       <div className="container-x">
         <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <SectionHead
-            eyebrow="Femrise events"
+            eyebrow="Upcoming events"
             title={
               <>
-                Show up. <span className="font-hand font-normal text-fr-blue">Play together!</span>
+                Coming up <span className="font-hand font-normal text-fr-blue">next!</span>
               </>
             }
-            intro="Runs, tournaments, workshops and meetups for women who play. Pick an event and save your spot online."
+            intro="Save your spot before they fill up — most events have limited places."
           />
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/events">See all events</ButtonLink>

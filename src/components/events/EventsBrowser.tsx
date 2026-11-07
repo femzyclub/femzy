@@ -9,9 +9,9 @@ import { categoryStyle } from "@/lib/events/shared";
 import { EVENT_CATEGORIES, type EventItem } from "@/lib/events/types";
 
 /** Search + category filter over Featured / Upcoming / Past. Filtering is instant (no reload). */
-export function EventsBrowser({ events, now }: { events: EventItem[]; now: number }) {
+export function EventsBrowser({ events, now, initialCategory = null }: { events: EventItem[]; now: number; initialCategory?: string | null }) {
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState<string | null>(null);
+  const [cat, setCat] = useState<string | null>(initialCategory);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -45,7 +45,7 @@ export function EventsBrowser({ events, now }: { events: EventItem[]; now: numbe
           <FilterChip active={!cat} onClick={() => setCat(null)}>
             All
           </FilterChip>
-          {EVENT_CATEGORIES.filter((c) => present.has(c)).map((c) => (
+          {EVENT_CATEGORIES.filter((c) => present.has(c) || c === cat).map((c) => (
             <FilterChip key={c} active={cat === c} onClick={() => setCat(cat === c ? null : c)} dot={categoryStyle(c).hex}>
               {c}
             </FilterChip>
