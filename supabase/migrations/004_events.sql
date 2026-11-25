@@ -77,6 +77,10 @@ create table if not exists public.event_registrations (
   answers jsonb not null default '{}'::jsonb check (jsonb_typeof(answers) = 'object'),
   status public.event_registration_status not null,
   amount int not null default 0, -- rupees
+  payment_provider text not null default 'razorpay' check (payment_provider in ('razorpay', 'manual')),
+  razorpay_order_id text unique,
+  razorpay_payment_id text unique,
+  payment_expires_at timestamptz,
   utr text, -- UPI transaction ID for paid events
   proof_path text, -- screenshot in the private "event-payment-proofs" bucket
   admin_note text,
@@ -271,14 +275,7 @@ begin
   v_answers := clean_event_answers(v_e.form_fields, coalesce(p_answers, '{}'::jsonb));
 
   if v_e.fee > 0 then
-    if v_utr is null or v_utr !~ '^[A-Z0-9]{10,22}$' then raise exception 'INVALID_UTR'; end if;
-    if p_proof_path is null or p_proof_path !~ ('^' || p_event::text || '/[A-Za-z0-9._-]{1,120}$') then
-      raise exception 'MISSING_PROOF';
-    end if;
-    if exists (select 1 from event_registrations r where upper(r.utr) = v_utr and r.status <> 'cancelled') then
-      raise exception 'UTR_USED';
-    end if;
-    v_status := 'pending_payment';
+    raise exception 'PAYMENT_REQUIRED';
   else
     v_utr := null;
     v_status := 'confirmed';
@@ -290,6 +287,74 @@ begin
           case when v_e.fee > 0 then p_proof_path end);
 
   return query select v_code, v_status;
+end;
+$$;
+
+-- =====================================================================
+-- RAZORPAY: reserve a seat before Checkout, then confirm it only after
+-- the server verifies Razorpay's payment signature.
+-- =====================================================================
+create or replace function public.begin_razorpay_event_registration(
+  p_event uuid, p_full_name text, p_email text, p_phone text, p_age integer,
+  p_answers jsonb default '{}'::jsonb
+)
+returns table (registration_id uuid, registration_code text, amount int, event_title text)
+language plpgsql security definer set search_path = public as $$
+#variable_conflict use_column
+declare
+  v_e events%rowtype;
+  v_uid uuid := auth.uid();
+  v_email text := lower(btrim(coalesce(p_email, '')));
+  v_code text;
+  v_answers jsonb;
+  v_id uuid;
+begin
+  select * into v_e from events where id = p_event for update;
+  if not found or v_e.status <> 'published' then raise exception 'EVENT_NOT_FOUND'; end if;
+  if v_e.fee <= 0 then raise exception 'FREE_EVENT'; end if;
+  if v_e.registration_opens_at is not null and now() < v_e.registration_opens_at then raise exception 'NOT_OPEN_YET'; end if;
+  if now() > coalesce(v_e.registration_closes_at, v_e.starts_at) then raise exception 'REGISTRATION_CLOSED'; end if;
+
+  -- Abandoned checkout sessions stop holding a seat after 20 minutes.
+  update event_registrations set status = 'cancelled', cancelled_at = now(), admin_note = 'Payment session expired'
+    where event_id = p_event and status = 'pending_payment' and payment_provider = 'razorpay'
+      and payment_expires_at < now();
+
+  if v_e.capacity is not null and v_e.registered_count >= v_e.capacity then raise exception 'EVENT_FULL'; end if;
+  if exists (select 1 from event_registrations r where r.event_id = p_event and r.status <> 'cancelled'
+    and (r.email = v_email::citext or (v_uid is not null and r.user_id = v_uid))) then raise exception 'ALREADY_REGISTERED'; end if;
+  if p_age is null or p_age < 1 or p_age > 120 then raise exception 'INVALID_AGE'; end if;
+
+  v_answers := clean_event_answers(v_e.form_fields, coalesce(p_answers, '{}'::jsonb));
+  v_code := new_event_registration_code();
+  insert into event_registrations (event_id, registration_code, user_id, full_name, email, phone, age, answers, status, amount, payment_provider, payment_expires_at)
+    values (p_event, v_code, v_uid, btrim(p_full_name), v_email, btrim(p_phone), p_age, v_answers, 'pending_payment', v_e.fee, 'razorpay', now() + interval '20 minutes')
+    returning id into v_id;
+  return query select v_id, v_code, v_e.fee, v_e.title;
+end;
+$$;
+
+create or replace function public.attach_razorpay_order(p_registration uuid, p_order_id text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update event_registrations set razorpay_order_id = p_order_id
+    where id = p_registration and status = 'pending_payment' and payment_provider = 'razorpay'
+      and payment_expires_at > now() and razorpay_order_id is null;
+  if not found then raise exception 'PAYMENT_SESSION_EXPIRED'; end if;
+end;
+$$;
+
+create or replace function public.confirm_razorpay_event_registration(p_registration uuid, p_order_id text, p_payment_id text)
+returns table (registration_code text) language plpgsql security definer set search_path = public as $$
+declare v_r event_registrations%rowtype;
+begin
+  select * into v_r from event_registrations where id = p_registration for update;
+  if not found or v_r.status <> 'pending_payment' or v_r.payment_provider <> 'razorpay' then raise exception 'PAYMENT_NOT_FOUND'; end if;
+  if v_r.payment_expires_at < now() then raise exception 'PAYMENT_SESSION_EXPIRED'; end if;
+  if v_r.razorpay_order_id is distinct from p_order_id then raise exception 'PAYMENT_ORDER_MISMATCH'; end if;
+  update event_registrations set status = 'confirmed', razorpay_payment_id = p_payment_id,
+    reviewed_at = now(), payment_expires_at = null where id = v_r.id;
+  return query select v_r.registration_code;
 end;
 $$;
 
@@ -387,9 +452,19 @@ drop policy if exists "own event registrations" on public.event_registrations;
 create policy "own event registrations" on public.event_registrations for select
   using ((user_id is not null and user_id = auth.uid()) or is_admin());
 
+-- RLS decides which rows are visible; these grants allow the browser role to
+-- query published events and the signed-in admin role to read registrations.
+grant select on public.events to anon, authenticated;
+grant insert, update, delete on public.events to authenticated;
+grant select on public.event_registrations to authenticated;
+grant select, insert, update, delete on storage.objects to authenticated;
+
 revoke all on function public.sync_event_registered_count() from public, anon, authenticated;
 revoke all on function public.new_event_registration_code() from public, anon, authenticated;
 grant execute on function public.register_for_event(uuid, text, text, text, integer, jsonb, text, text) to anon, authenticated;
+grant execute on function public.begin_razorpay_event_registration(uuid, text, text, text, integer, jsonb) to anon, authenticated;
+grant execute on function public.attach_razorpay_order(uuid, text) to anon, authenticated;
+grant execute on function public.confirm_razorpay_event_registration(uuid, text, text) to anon, authenticated;
 revoke execute on function public.admin_review_event_payment(uuid, boolean, text) from anon;
 revoke execute on function public.admin_add_event_registration(uuid, text, text, text, integer, text) from anon;
 revoke execute on function public.admin_cancel_event_registration(uuid, text) from anon;

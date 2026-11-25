@@ -13,7 +13,7 @@ function cell(v: unknown) {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-const STATUS_LABEL: Record<string, string> = { confirmed: "Confirmed", pending_payment: "Payment to verify", cancelled: "Removed / rejected" };
+const STATUS_LABEL: Record<string, string> = { confirmed: "Confirmed", pending_payment: "Payment in progress", cancelled: "Removed / expired" };
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

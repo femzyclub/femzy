@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Admin sign in — Femzy", robots: { 
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/admin/events";
   return (
     <AuthShell kicker="Femzy team" title="Admin sign in">
       <LoginForm next={safeNext} supabaseReady={isSupabaseConfigured} />

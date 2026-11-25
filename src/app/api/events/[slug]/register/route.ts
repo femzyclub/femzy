@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
-import { sniffImage } from "@/lib/events/images";
 import { registrationErrorMessage } from "@/lib/events/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -29,7 +28,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const phone = String(form.get("phone") ?? "").trim();
   const age = Number(form.get("age"));
-  const utr = String(form.get("utr") ?? "").replace(/\s/g, "");
   let answers: Record<string, string> = {};
   try {
     const parsed = JSON.parse(String(form.get("answers") ?? "{}"));
@@ -47,25 +45,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   const { data: event } = await supabase.from("events").select("id, fee, status").eq("slug", slug).eq("status", "published").maybeSingle();
   if (!event) return bad("This event isn't open for registration.", 404);
+  if (event.fee > 0) return bad("Paid event registrations must be completed through Razorpay.", 409);
 
-  // Paid events: upload the UPI screenshot into the private bucket, inside this event's folder.
-  let proofPath: string | null = null;
-  if (event.fee > 0) {
-    if (!/^[A-Za-z0-9]{10,22}$/.test(utr)) return bad(registrationErrorMessage("INVALID_UTR")!);
-    const file = form.get("proof");
-    if (!(file instanceof File)) return bad(registrationErrorMessage("MISSING_PROOF")!);
-    const img = await sniffImage(file, { maxBytes: 8 * 1024 * 1024, allowHeic: true });
-    if ("error" in img) return bad(img.error!);
-    proofPath = `${event.id}/${crypto.randomUUID()}.${img.ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("event-payment-proofs")
-      .upload(proofPath, img.body, { contentType: img.type, upsert: false });
-    if (upErr) {
-      console.error("[events] proof upload failed", upErr.message);
-      return bad("Couldn't upload the screenshot. Please try again.", 500);
-    }
-  }
-
+  // Free events are confirmed immediately.
   const { data, error } = await supabase.rpc("register_for_event", {
     p_event: event.id,
     p_full_name: fullName,
@@ -73,8 +55,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     p_phone: phone,
     p_age: age,
     p_answers: answers,
-    p_utr: event.fee > 0 ? utr : null,
-    p_proof_path: proofPath,
+    p_utr: null,
+    p_proof_path: null,
   });
 
   if (error) {

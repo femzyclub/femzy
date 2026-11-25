@@ -73,6 +73,8 @@ drop policy if exists "members read own profile" on public.profiles;
 create policy "members read own profile" on public.profiles for select
   using (id = auth.uid() or public.is_admin());
 
+grant select on public.profiles to authenticated;
+
 drop policy if exists "admins read audit log" on public.admin_logs;
 create policy "admins read audit log" on public.admin_logs for select
   using (public.is_admin());

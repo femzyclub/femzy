@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import clsx from "clsx";
 import { Download, ExternalLink, Pencil, Search } from "lucide-react";
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AddRegistrationForm, DeleteEventForm } from "@/components/admin/EventAdminForms";
+import { DeleteEventForm } from "@/components/admin/EventAdminForms";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { CategoryChip } from "@/components/events/EventBits";
 import { requireAdmin } from "@/lib/admin";
@@ -12,7 +12,7 @@ import { mapEvent, type EventRow } from "@/lib/events/data";
 import { feeLabel, REGISTRATION_LABEL, registrationState } from "@/lib/events/shared";
 import { formatDateTime, formatRange } from "@/lib/events/time";
 import type { EventRegistrationRow } from "@/lib/events/types";
-import { removeRegistration, reviewEventPayment, setEventStatus, toggleFeatured } from "../actions";
+import { removeRegistration, setEventStatus, toggleFeatured } from "../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Manage event — Femzy admin", robots: { index: false } };
@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "Manage event — Femzy admin", robot
 const FILTERS = [
   ["active", "Registered"],
   ["confirmed", "Confirmed"],
-  ["pending_payment", "Payment to verify"],
+  ["pending_payment", "Payment in progress"],
   ["cancelled", "Removed / rejected"],
   ["all", "All"],
 ] as const;
@@ -28,7 +28,7 @@ type Filter = (typeof FILTERS)[number][0];
 
 const REG_STATUS: Record<string, [string, string]> = {
   confirmed: ["Confirmed", "bg-fr-softgreen"],
-  pending_payment: ["Verify payment", "bg-fr-orange"],
+  pending_payment: ["Payment in progress", "bg-fr-orange"],
   cancelled: ["Removed", "bg-white text-fr-muted"],
 };
 
@@ -114,7 +114,7 @@ export default async function ManageEventPage({
           <Box label="Registered" value={e.registeredCount} sub={e.capacity ? `of ${e.capacity}` : "no limit"} tone="bg-fr-yellow" />
           <Box label="Seats left" value={left ?? "∞"} />
           <Box label="Confirmed" value={tally.confirmed ?? 0} tone="bg-fr-softgreen" />
-          <Box label="Payments to verify" value={tally.pending_payment ?? 0} tone={(tally.pending_payment ?? 0) > 0 ? "bg-fr-orange" : "bg-white"} />
+          <Box label="Payment sessions" value={tally.pending_payment ?? 0} tone={(tally.pending_payment ?? 0) > 0 ? "bg-fr-orange" : "bg-white"} />
         </section>
 
         {/* Publish / cancel / feature */}
@@ -228,23 +228,7 @@ export default async function ManageEventPage({
                       {r.admin_note && <p className="mt-2 text-[13px] text-fr-muted">Note: {r.admin_note}</p>}
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
-                        {r.status === "pending_payment" && (
-                          <>
-                            <form action={reviewEventPayment}>
-                              <input type="hidden" name="id" value={r.id} />
-                              <input type="hidden" name="event_id" value={e.id} />
-                              <input type="hidden" name="decision" value="approve" />
-                              <button className="btn-primary !px-5 !py-2">Approve payment</button>
-                            </form>
-                            <form action={reviewEventPayment} className="flex flex-wrap gap-2">
-                              <input type="hidden" name="id" value={r.id} />
-                              <input type="hidden" name="event_id" value={e.id} />
-                              <input type="hidden" name="decision" value="reject" />
-                              <input name="note" placeholder="Reason (e.g. amount not received)" className="field min-w-[180px] !py-2" maxLength={300} />
-                              <button className="btn-outline !px-5 !py-2">Reject</button>
-                            </form>
-                          </>
-                        )}
+                        {r.status === "pending_payment" && <p className="text-[13px] font-bold text-fr-charcoal">Awaiting Razorpay payment. Unfinished checkout sessions expire automatically.</p>}
                         {r.status === "confirmed" && (
                           <form action={removeRegistration}>
                             <input type="hidden" name="id" value={r.id} />
@@ -266,12 +250,6 @@ export default async function ManageEventPage({
               })}
             </ul>
           )}
-
-          <div className="card-pop mt-8 bg-fr-cream p-5">
-            <h3 className="font-display text-lg font-bold">Add a participant manually</h3>
-            <p className="mb-4 mt-1 text-[13px] text-fr-muted">Confirmed straight away. Seat limits still apply.</p>
-            <AddRegistrationForm eventId={e.id} />
-          </div>
         </section>
 
         <section className="mt-10 max-w-xl">

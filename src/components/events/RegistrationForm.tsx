@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CheckCircle2, Copy, ImageUp, Loader2, Smartphone } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import clsx from "clsx";
@@ -13,10 +13,28 @@ type Props = {
   event: { id: string; slug: string; title: string; fee: number; formFields: EventFormField[] };
   state: RegistrationState;
   isDemo: boolean;
-  upi: { qrFiles: string[]; upiId: string; upiName: string };
 };
 
-type Done = { code: string; status: "confirmed" | "pending_payment" };
+type Done = { code: string; status: "confirmed" };
+
+type RazorpayResponse = { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string };
+type RazorpayCheckout = { open: () => void; on: (event: string, listener: (response: { error?: { description?: string } }) => void) => void };
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout;
+  }
+}
+
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Could not load the Razorpay checkout. Please check your connection and try again."));
+    document.head.appendChild(script);
+  });
+}
 
 const CLOSED_COPY: Record<Exclude<RegistrationState, "open">, string> = {
   full: "All spots are taken. Keep an eye on our other events!",
@@ -26,24 +44,16 @@ const CLOSED_COPY: Record<Exclude<RegistrationState, "open">, string> = {
   past: "This event has already happened. See you at the next one!",
 };
 
-export function RegistrationForm({ event, state, isDemo, upi }: Props) {
+export function RegistrationForm({ event, state, isDemo }: Props) {
   const [done, setDone] = useState<Done | null>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [age, setAge] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [utr, setUtr] = useState("");
-  const [proof, setProof] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [qrIndex, setQrIndex] = useState(0);
   const paid = event.fee > 0;
-  const qrSrc = upi.qrFiles[qrIndex] ?? null;
-  const upiLink = upi.upiId
-    ? `upi://pay?pa=${encodeURIComponent(upi.upiId)}&pn=${encodeURIComponent(upi.upiName || "Femzy")}&am=${event.fee}&cu=INR&tn=${encodeURIComponent(event.title.slice(0, 40))}`
-    : null;
 
   if (done) return <Confirmation done={done} title={event.title} email={email} />;
 
@@ -59,15 +69,6 @@ export function RegistrationForm({ event, state, isDemo, upi }: Props) {
     );
   }
 
-  function pickProof(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (!f.type.startsWith("image/")) return setError("Please upload an image (screenshot) of the payment.");
-    if (f.size > 8 * 1024 * 1024) return setError("Screenshot must be under 8 MB.");
-    setError(null);
-    setProof(f);
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -79,24 +80,51 @@ export function RegistrationForm({ event, state, isDemo, upi }: Props) {
     for (const f of event.formFields) {
       if (f.required && !(answers[f.id] ?? "").trim()) return setError(`Please fill in: ${f.label}.`);
     }
-    if (paid) {
-      if (!/^[A-Za-z0-9]{10,22}$/.test(utr.replace(/\s/g, ""))) return setError("Enter the 12-digit UPI transaction ID (UTR) shown in your payment app.");
-      if (!proof) return setError("Please upload the payment screenshot.");
-    }
-
     const body = new FormData();
     body.set("fullName", fullName.trim());
     body.set("email", email.trim());
     body.set("phone", phone.trim());
     body.set("age", age);
     body.set("answers", JSON.stringify(answers));
-    if (paid) {
-      body.set("utr", utr.replace(/\s/g, ""));
-      if (proof) body.set("proof", proof);
-    }
-
     setBusy(true);
     try {
+      if (paid) {
+        const orderRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/razorpay-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), phone: phone.trim(), age: Number(age), answers }),
+        });
+        const order = (await orderRes.json().catch(() => ({}))) as { registrationId?: string; orderId?: string; amount?: number; currency?: string; keyId?: string; title?: string; email?: string; phone?: string; error?: string };
+        if (!orderRes.ok || !order.registrationId || !order.orderId || !order.keyId) throw new Error(order.error || "Couldn't begin the payment. Please try again.");
+        await loadRazorpayCheckout();
+        if (!window.Razorpay) throw new Error("Razorpay checkout could not start. Please try again.");
+        const checkout = new window.Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Femzy",
+          description: order.title,
+          order_id: order.orderId,
+          prefill: { name: fullName.trim(), email: order.email, contact: order.phone },
+          theme: { color: "#1748E8" },
+          handler: async (response: RazorpayResponse) => {
+            try {
+              const verifyRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/razorpay-verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ registrationId: order.registrationId, ...response }) });
+              const verified = (await verifyRes.json().catch(() => ({}))) as { code?: string; error?: string };
+              if (!verifyRes.ok || !verified.code) throw new Error(verified.error || "Payment verification failed.");
+              setDone({ code: verified.code, status: "confirmed" });
+              window.scrollTo({ top: (document.getElementById("register")?.offsetTop ?? 0) - 100, behavior: "smooth" });
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Payment verification failed. Please contact Femzy with your payment ID.");
+            } finally {
+              setBusy(false);
+            }
+          },
+        });
+        checkout.on("payment.failed", (response) => { setBusy(false); setError(response.error?.description || "Payment was not completed. You can try again."); });
+        checkout.open();
+        return;
+      }
       const res = await fetch(`/api/events/${encodeURIComponent(event.slug)}/register`, { method: "POST", body });
       const json = (await res.json().catch(() => ({}))) as { code?: string; status?: Done["status"]; error?: string };
       if (!res.ok || !json.code) throw new Error(json.error || "Something went wrong. Please try again.");
@@ -120,7 +148,7 @@ export function RegistrationForm({ event, state, isDemo, upi }: Props) {
           </h2>
           <p className="mt-4 text-[15px] text-fr-charcoal">
             {paid
-              ? `Entry is ${feeLabel(event.fee)}. Pay by GPay / any UPI app, then add the transaction ID and screenshot. Your spot is held while we verify it.`
+              ? `Entry is ${feeLabel(event.fee)}. Complete payment securely with Razorpay to confirm your spot.`
               : "It's free — just tell us who's coming."}
           </p>
           <p className="mt-4 text-[14px] text-fr-charcoal">No account needed — complete this form and you&apos;re registered.</p>
@@ -147,47 +175,6 @@ export function RegistrationForm({ event, state, isDemo, upi }: Props) {
             ))}
           </div>
 
-          {paid && (
-            <div className="rounded-[14px] border-2 border-ink bg-fr-cream p-5">
-              <p className="font-display text-lg font-bold">Pay {feeLabel(event.fee)} by UPI</p>
-              <div className="mt-4 grid gap-5 sm:grid-cols-[150px_1fr]">
-                {qrSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qrSrc} alt="UPI QR code" onError={() => setQrIndex((i) => i + 1)} className="w-[150px] rounded-[10px] border-2 border-ink bg-white p-1.5" />
-                ) : (
-                  <div className="flex h-[150px] w-[150px] items-center justify-center rounded-[10px] border-2 border-dashed border-ink bg-white p-3 text-center text-[12px] font-bold">
-                    QR not added yet
-                  </div>
-                )}
-                <div className="space-y-3 text-[14px]">
-                  {upi.upiId && (
-                    <button type="button" onClick={() => navigator.clipboard?.writeText(upi.upiId).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }).catch(() => {})} className="inline-flex items-center gap-2 rounded-full border-2 border-ink bg-white px-3 py-1.5 font-mono font-bold">
-                      {upi.upiId} {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  )}
-                  {upiLink && (
-                    <a href={upiLink} className="btn-yellow !px-5 !py-2.5 sm:hidden">
-                      <Smartphone className="h-4 w-4" /> Pay with UPI app
-                    </a>
-                  )}
-                  <p className="text-fr-charcoal">Scan with GPay, PhonePe or Paytm. Pay exactly {feeLabel(event.fee)}.</p>
-                </div>
-              </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                <Field label="UPI transaction ID (UTR)" required>
-                  <input className="field font-mono" value={utr} onChange={(e) => setUtr(e.target.value)} inputMode="numeric" placeholder="12-digit number" maxLength={26} />
-                </Field>
-                <Field label="Payment screenshot" required>
-                  <label className="field flex cursor-pointer items-center gap-2 !py-3">
-                    <ImageUp className="h-5 w-5 shrink-0" />
-                    <span className="truncate">{proof ? proof.name : "Choose image"}</span>
-                    <input type="file" accept="image/*" onChange={pickProof} className="sr-only" />
-                  </label>
-                </Field>
-              </div>
-            </div>
-          )}
-
           <AnimatePresence>
             {error && (
               <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert" className="rounded-[10px] border-2 border-fr-red bg-white px-4 py-3 text-[14px] font-bold text-fr-red">
@@ -199,7 +186,7 @@ export function RegistrationForm({ event, state, isDemo, upi }: Props) {
           <span className="relative inline-flex">
             <button type="submit" disabled={busy} className="btn-primary disabled:opacity-70">
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-              {busy ? "Registering…" : paid ? "Submit registration" : "Register now"}
+              {busy ? "Preparing payment…" : paid ? `Pay ${feeLabel(event.fee)} securely` : "Register now"}
             </button>
             {!busy && <Burst className="absolute -right-9 top-1/2 h-9 w-9 -translate-y-1/2" />}
           </span>
@@ -253,16 +240,13 @@ function CustomInput({ field, value, onChange }: { field: EventFormField; value:
 }
 
 function Confirmation({ done, title, email }: { done: Done; title: string; email: string }) {
-  const pending = done.status === "pending_payment";
   return (
     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="card-pop relative bg-fr-softgreen p-8 text-center sm:p-12">
       <span className="tape" aria-hidden />
       <CheckCircle2 className="mx-auto h-14 w-14" aria-hidden />
-      <p className="h-display mt-4 text-4xl sm:text-5xl">{pending ? "Almost there!" : "You're in!"}</p>
+      <p className="h-display mt-4 text-4xl sm:text-5xl">You&apos;re in!</p>
       <p className="mx-auto mt-3 max-w-lg text-[16px]">
-        {pending
-          ? `We've received your registration for ${title}. Your spot is held while the team verifies your UPI payment.`
-          : `You're registered for ${title}. See you there!`}
+        You&apos;re registered for {title}. See you there!
       </p>
       <div className="mx-auto mt-6 inline-block rounded-[12px] border-2 border-ink bg-white px-6 py-4 shadow-pop-sm">
         <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-fr-muted">Registration ID</p>

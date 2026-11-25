@@ -22,7 +22,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-fr-warm">
+    <header className="fixed inset-x-0 top-0 z-50 bg-transparent">
       <nav className="container-x flex h-[88px] items-center justify-between lg:h-[96px]">
         <Logo size={72} priority />
 

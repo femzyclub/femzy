@@ -16,8 +16,6 @@ import { formatDateTime, formatRange, tzLabel } from "@/lib/events/time";
 // Rendered per request so registration availability is always current.
 export const dynamic = "force-dynamic";
 
-const QR_FILES = ["/payments/upi-qr.jpeg", "/payments/upi-qr.jpg", "/payments/upi-qr.png"];
-
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -196,7 +194,6 @@ export default async function EventPage({ params }: Props) {
               event={{ id: event.id, slug: event.slug, title: event.title, fee: event.fee, formFields: event.formFields }}
               state={state}
               isDemo={isDemo}
-              upi={{ qrFiles: QR_FILES, upiId: env.upiId, upiName: env.upiName }}
             />
           </section>
         </div>

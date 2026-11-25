@@ -29,14 +29,14 @@ Open http://localhost:3000
 
 1. Create a project at supabase.com (region: Mumbai).
 2. SQL Editor → run `supabase/schema.sql` (profiles, admin role and audit log), then `supabase/migrations/004_events.sql` (events, registrations, storage and security rules).
-3. Copy the project URL, publishable key and secret key into `.env.local` (and Vercel). The publishable key is safe for the browser; the secret key must remain server-only.
+3. Copy the project URL, publishable key and secret key into `.env.local` (and Vercel). The publishable key is safe for the browser; the secret key must remain server-only. Also add your Razorpay Key ID as `NEXT_PUBLIC_RAZORPAY_KEY_ID`, Key Secret as `RAZORPAY_KEY_SECRET`, and a webhook secret as `RAZORPAY_WEBHOOK_SECRET` (all except the Key ID stay server-only).
 4. Sign up / log in on the site, then make yourself admin in the SQL editor:
    `update public.profiles set role = 'admin' where email = 'you@example.com';`
 
 ## Event registration & payments
 
 - Every attendee registers as a guest; no account creation or sign-in is shown anywhere in the public website.
-- Free events are confirmed instantly. Paid events use the GPay / UPI QR in `public/payments/`: the visitor submits the UTR + screenshot, the seat is held, and an admin approves or rejects it on the event's admin page.
+- Free events are confirmed instantly. Paid events open Razorpay Checkout and are confirmed only after the server verifies Razorpay's payment signature. In Razorpay Dashboard, configure an `order.paid` webhook to `https://<your-domain>/api/razorpay/webhook` using the same webhook secret.
 - Capacity, deadline, duplicate and UTR checks run inside the database function `register_for_event()`, which locks the event row, so seats can't be oversold even with simultaneous registrations.
 - Every registration gets an ID like `FRE-7K2Q9XMD`. There is no email service yet, so confirmations are shown on screen.
 
