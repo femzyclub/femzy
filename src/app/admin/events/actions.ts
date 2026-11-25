@@ -51,7 +51,7 @@ function parseFormFields(raw: string): EventFormField[] {
       .map((f) => {
         const label = String(f?.label ?? "").trim().slice(0, 120);
         let id = slugify(String(f?.id || label)).replace(/-/g, "_").slice(0, 40) || "q";
-        while (used.has(id) || ["full_name", "email", "phone"].includes(id)) id = `${id}_2`;
+        while (used.has(id) || ["full_name", "email", "phone", "age"].includes(id)) id = `${id}_2`;
         used.add(id);
         const type = (FORM_FIELD_TYPES as readonly string[]).includes(f?.type) ? (f.type as EventFormField["type"]) : "text";
         const options =
@@ -287,14 +287,17 @@ export async function addRegistration(_prev: AddRegistrationState, fd: FormData)
   const fullName = str(fd, "full_name", 100);
   const email = str(fd, "email", 200).toLowerCase();
   const phone = str(fd, "phone", 20);
+  const age = Number(str(fd, "age", 3));
   if (fullName.length < 2) return { error: "Enter the participant's name." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: "Enter a valid email." };
   if (!/^\+?[0-9][0-9 -]{6,19}$/.test(phone)) return { error: "Enter a valid phone number." };
+  if (!Number.isInteger(age) || age < 1 || age > 120) return { error: "Enter a valid age." };
   const { data, error } = await admin.supabase.rpc("admin_add_event_registration", {
     p_event: eventId,
     p_full_name: fullName,
     p_email: email,
     p_phone: phone,
+    p_age: age,
     p_note: opt(fd, "note", 300),
   });
   if (error) return { error: registrationErrorMessage(error.message) ?? error.message };

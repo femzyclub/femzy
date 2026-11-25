@@ -5,7 +5,7 @@ import { EventForm } from "@/components/admin/EventForm";
 import { requireAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "New event — Femrise! admin", robots: { index: false } };
+export const metadata: Metadata = { title: "New event — Femzy admin", robots: { index: false } };
 
 export default async function NewEventPage() {
   await requireAdmin("/admin/events/new");
@@ -39,7 +39,7 @@ export default async function NewEventPage() {
               registrationClosesAt: "",
               isFeatured: false,
               agenda: [],
-              organizerName: "Fem Rise Club",
+              organizerName: "Femzy",
               organizerEmail: "",
               organizerPhone: "",
               formFields: [],

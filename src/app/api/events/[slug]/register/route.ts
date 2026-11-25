@@ -28,6 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   const fullName = String(form.get("fullName") ?? "").trim();
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const phone = String(form.get("phone") ?? "").trim();
+  const age = Number(form.get("age"));
   const utr = String(form.get("utr") ?? "").replace(/\s/g, "");
   let answers: Record<string, string> = {};
   try {
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (fullName.length < 2 || fullName.length > 100) return bad("Please enter your full name.");
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 200) return bad("Please enter a valid email address.");
   if (!/^\+?[0-9][0-9 -]{6,19}$/.test(phone)) return bad("Please enter a valid phone number.");
+  if (!Number.isInteger(age) || age < 1 || age > 120) return bad("Please enter a valid age.");
 
   const { data: event } = await supabase.from("events").select("id, fee, status").eq("slug", slug).eq("status", "published").maybeSingle();
   if (!event) return bad("This event isn't open for registration.", 404);
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     p_full_name: fullName,
     p_email: email,
     p_phone: phone,
+    p_age: age,
     p_answers: answers,
     p_utr: event.fee > 0 ? utr : null,
     p_proof_path: proofPath,

@@ -35,7 +35,7 @@ export function EventsSection({ events, now }: { events: EventItem[]; now: numbe
         {upcoming.length === 0 ? (
           <div className="card-pop mt-12 bg-white p-10 text-center">
             <p className="h-display text-3xl">New events coming soon</p>
-            <p className="mx-auto mt-3 max-w-md text-[15px] text-fr-charcoal">Keep an eye on the calendar — upcoming Femrise events will show up here as soon as they&apos;re announced.</p>
+            <p className="mx-auto mt-3 max-w-md text-[15px] text-fr-charcoal">Keep an eye on the calendar — upcoming Femzy events will show up here as soon as they&apos;re announced.</p>
           </div>
         ) : (
           <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

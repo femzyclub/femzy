@@ -11,14 +11,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Femrise! — Events for women who play",
+  title: "Femzy — Events for women who play",
   description:
-    "Runs, tournaments, workshops and meetups for women who play. Find upcoming Fem Rise Club events, check the calendar and register online.",
-  icons: { icon: "/brand/femrise-logo.png" },
+    "Runs, tournaments, workshops and meetups for women who play. Find upcoming Femzy events, check the calendar and register online.",
+  icons: { icon: "/brand/femzy_logo.png" },
   openGraph: {
-    title: "Femrise! — Events for women who play",
-    description: "Find your game. Find your people. Upcoming Fem Rise Club events and calendar.",
-    images: ["/brand/femrise-logo.png"],
+    title: "Femzy — Events for women who play",
+    description: "Find your game. Find your people. Upcoming Femzy events and calendar.",
+    images: ["/brand/femzy_logo.png"],
   },
 };
 

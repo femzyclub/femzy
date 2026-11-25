@@ -54,7 +54,7 @@ export function EventsBrowser({ events, now, initialCategory = null }: { events:
       </div>
 
       {events.length === 0 ? (
-        <Empty title="No events yet" body="New Femrise events will show up here as soon as they're announced. Check back soon!" />
+        <Empty title="No events yet" body="New Femzy events will show up here as soon as they're announced. Check back soon!" />
       ) : filtered.length === 0 ? (
         <Empty title="Nothing matches that" body="Try a different search or clear the category filter." />
       ) : (

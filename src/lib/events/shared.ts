@@ -2,7 +2,7 @@
 import type { EventCategory, EventItem, RegistrationState } from "@/lib/events/types";
 
 /**
- * Category look — built ONLY from the existing Femrise palette (tailwind.config.ts).
+ * Category look — built ONLY from the existing Femzy palette (tailwind.config.ts).
  * `chip` = Tailwind classes, `hex` = the same palette colour for dots / SVG.
  */
 export const CATEGORY_STYLE: Record<EventCategory, { chip: string; hex: string }> = {
@@ -77,6 +77,8 @@ export function registrationErrorMessage(raw: string) {
       return `Please fill in: ${raw.split(":").slice(1).join(":").trim() || "all required fields"}.`;
     case "INVALID_UTR":
       return "Enter the 12-digit UPI transaction ID (UTR) shown in your payment app.";
+    case "INVALID_AGE":
+      return "Please enter a valid age.";
     case "MISSING_PROOF":
       return "Please upload the payment screenshot.";
     case "UTR_USED":

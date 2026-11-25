@@ -8,7 +8,7 @@ import { env, isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/env"
 export async function createSupabaseServerClient() {
   if (!isSupabaseConfigured) return null;
   const cookieStore = await cookies();
-  return createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+  return createServerClient(env.supabaseUrl, env.supabasePublishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -27,14 +27,14 @@ export async function createSupabaseServerClient() {
 /** Anonymous client for public, cacheable reads (landing page). */
 export function createSupabasePublicClient() {
   if (!isSupabaseConfigured) return null;
-  return createPlainClient(env.supabaseUrl, env.supabaseAnonKey, { auth: { persistSession: false } });
+  return createPlainClient(env.supabaseUrl, env.supabasePublishableKey, { auth: { persistSession: false } });
 }
 
 /**
- * Service-role client. Bypasses RLS — use ONLY in trusted server code
+ * Secret-key client. Bypasses RLS — use ONLY in trusted server code
  * (payment webhooks, admin jobs). Never import into client components.
  */
 export function createSupabaseAdminClient() {
   if (!isSupabaseAdminConfigured) return null;
-  return createPlainClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false } });
+  return createPlainClient(env.supabaseUrl, env.supabaseSecretKey, { auth: { persistSession: false } });
 }

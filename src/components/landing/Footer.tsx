@@ -36,18 +36,17 @@ export function Footer({ cta = true }: { cta?: boolean }) {
       )}
 
       <div className="border-t-2 border-ink bg-fr-warm">
-        <div className="container-x grid gap-10 pb-12 pt-14 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+        <div className="container-x grid gap-10 pb-12 pt-14 lg:grid-cols-[1.4fr_repeat(2,1fr)]">
           <div>
             <Logo size={84} />
             <p className="mt-4 max-w-[260px] text-[15px] text-fr-charcoal">A community for women who play — runs, tournaments, workshops and meetups.</p>
           </div>
           <FooterCol title="Events" links={[["/events", "All events"], ["/events/calendar", "Events calendar"], ["/#coming-up", "Coming up next"]]} />
-          <FooterCol title="Community" links={[["/#how-it-works", "How it works"], ["/#about", "About Fem Rise Club"], ["/#categories", "What we play"]]} />
-          <FooterCol title="Account" links={[["/login", "Log in"]]} />
+          <FooterCol title="Community" links={[["/#how-it-works", "How it works"], ["/#about", "About Femzy"], ["/#categories", "What we play"]]} />
         </div>
         <Squiggle className="container-x block h-4 w-full opacity-30" />
         <div className="container-x flex flex-col gap-2 py-5 text-[13px] text-fr-muted sm:flex-row sm:justify-between">
-          <span>© {new Date().getFullYear()} Fem Rise Club</span>
+          <span>© {new Date().getFullYear()} Femzy</span>
           <a href="https://voxsera.com/" target="_blank" rel="noopener noreferrer" className="hover:text-ink">
             Built by Voxsera AI Solutions
           </a>

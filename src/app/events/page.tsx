@@ -12,13 +12,13 @@ import { EVENT_CATEGORIES } from "@/lib/events/types";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Events — Femrise!",
-  description: "Runs, tournaments, workshops and meetups for women who play. Find upcoming Femrise events and register online.",
+  title: "Events — Femzy",
+  description: "Runs, tournaments, workshops and meetups for women who play. Find upcoming Femzy events and register online.",
   alternates: { canonical: "/events" },
   openGraph: {
-    title: "Events — Femrise!",
-    description: "Find upcoming Femrise events and register online.",
-    images: ["/brand/femrise-logo.png"],
+    title: "Events — Femzy",
+    description: "Find upcoming Femzy events and register online.",
+    images: ["/brand/femzy_logo.png"],
   },
 };
 
@@ -33,12 +33,12 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     <>
       {isDemo && <DemoBanner />}
       <Navbar />
-      <main className="pt-[72px] lg:pt-[84px]">
+      <main className="pt-[88px] lg:pt-[96px]">
         <section className="relative overflow-hidden pb-10 pt-16 lg:pt-20">
           <Blob seed={7} color="#FBBE18" className="absolute -right-24 -top-10 w-[520px]" />
           <Blob seed={19} color="#62B946" wobble={0.35} className="absolute right-[32%] top-20 hidden w-24 lg:block" />
           <div className="container-x relative">
-            <span className="eyebrow">Femrise events</span>
+            <span className="eyebrow">Femzy events</span>
             <h1 className="h-display mt-5 text-6xl sm:text-8xl">
               Show up. <span className="font-hand font-normal text-fr-blue">Play together!</span>
             </h1>

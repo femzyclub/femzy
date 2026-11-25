@@ -22,9 +22,9 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 bg-fr-warm/90 backdrop-blur-md">
-      <nav className="container-x flex h-[72px] items-center justify-between lg:h-[84px]">
-        <Logo size={58} priority />
+    <header className="fixed inset-x-0 top-0 z-50 bg-fr-warm">
+      <nav className="container-x flex h-[88px] items-center justify-between lg:h-[96px]">
+        <Logo size={72} priority />
 
         <ul className="hidden items-center gap-8 lg:flex">
           {links.map((l) => {
@@ -54,9 +54,6 @@ export function Navbar() {
         </ul>
 
         <div className="flex items-center gap-3">
-          <Link href="/login" className="hidden px-3 py-2 text-[15px] font-medium hover:underline sm:inline">
-            Log in
-          </Link>
           <span className="relative hidden sm:inline-flex">
             <Link href="/events" className="btn-primary !px-6 !py-3">
               Explore events
@@ -97,10 +94,7 @@ export function Navbar() {
                   </Link>
                 </motion.li>
               ))}
-              <li className="mt-6 grid grid-cols-2 gap-3">
-                <Link href="/login" onClick={() => setOpen(false)} className="btn-outline">
-                  Log in
-                </Link>
+              <li className="mt-6">
                 <Link href="/events" onClick={() => setOpen(false)} className="btn-primary">
                   Explore events
                 </Link>

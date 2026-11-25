@@ -1,5 +1,5 @@
 -- =====================================================================
--- FEM RISE CLUB — EVENTS (listing, registration, calendar, admin)
+-- FEMZY — EVENTS (listing, registration, calendar, admin)
 -- Run this once in the Supabase SQL editor AFTER schema.sql.
 -- Safe to run on the live database: it only adds new tables, functions,
 -- policies and storage buckets. Nothing existing is changed.
@@ -73,6 +73,7 @@ create table if not exists public.event_registrations (
   full_name text not null check (char_length(full_name) between 2 and 100),
   email citext not null check (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' and char_length(email) <= 200),
   phone text not null check (phone ~ '^\+?[0-9][0-9 -]{6,19}$'),
+  age smallint not null check (age between 1 and 120),
   answers jsonb not null default '{}'::jsonb check (jsonb_typeof(answers) = 'object'),
   status public.event_registration_status not null,
   amount int not null default 0, -- rupees
@@ -233,6 +234,7 @@ create or replace function public.register_for_event(
   p_full_name text,
   p_email text,
   p_phone text,
+  p_age integer,
   p_answers jsonb default '{}'::jsonb,
   p_utr text default null,
   p_proof_path text default null
@@ -264,6 +266,7 @@ begin
   ) then
     raise exception 'ALREADY_REGISTERED';
   end if;
+  if p_age is null or p_age < 1 or p_age > 120 then raise exception 'INVALID_AGE'; end if;
 
   v_answers := clean_event_answers(v_e.form_fields, coalesce(p_answers, '{}'::jsonb));
 
@@ -272,8 +275,7 @@ begin
     if p_proof_path is null or p_proof_path !~ ('^' || p_event::text || '/[A-Za-z0-9._-]{1,120}$') then
       raise exception 'MISSING_PROOF';
     end if;
-    if exists (select 1 from event_registrations r where upper(r.utr) = v_utr and r.status <> 'cancelled')
-       or exists (select 1 from payments p where upper(p.utr) = v_utr and p.status <> 'rejected') then
+    if exists (select 1 from event_registrations r where upper(r.utr) = v_utr and r.status <> 'cancelled') then
       raise exception 'UTR_USED';
     end if;
     v_status := 'pending_payment';
@@ -283,13 +285,9 @@ begin
   end if;
 
   v_code := new_event_registration_code();
-  insert into event_registrations (event_id, registration_code, user_id, full_name, email, phone, answers, status, amount, utr, proof_path)
-  values (p_event, v_code, v_uid, btrim(p_full_name), v_email, btrim(p_phone), v_answers, v_status, v_e.fee, v_utr,
+  insert into event_registrations (event_id, registration_code, user_id, full_name, email, phone, age, answers, status, amount, utr, proof_path)
+  values (p_event, v_code, v_uid, btrim(p_full_name), v_email, btrim(p_phone), p_age, v_answers, v_status, v_e.fee, v_utr,
           case when v_e.fee > 0 then p_proof_path end);
-
-  if v_status = 'pending_payment' then
-    perform notify_admins('event_payment', 'New event payment to verify', v_e.title || ' · UTR ' || v_utr);
-  end if;
 
   return query select v_code, v_status;
 end;
@@ -324,7 +322,7 @@ $$;
 
 -- Manually add someone (e.g. paid in cash at the desk). Respects capacity; ignores the registration window.
 create or replace function public.admin_add_event_registration(
-  p_event uuid, p_full_name text, p_email text, p_phone text, p_note text default null
+  p_event uuid, p_full_name text, p_email text, p_phone text, p_age integer, p_note text default null
 )
 returns text language plpgsql security definer set search_path = public as $$
 declare
@@ -339,10 +337,11 @@ begin
   if exists (select 1 from event_registrations where event_id = p_event and status <> 'cancelled' and email = v_email::citext) then
     raise exception 'ALREADY_REGISTERED';
   end if;
+  if p_age is null or p_age < 1 or p_age > 120 then raise exception 'INVALID_AGE'; end if;
 
   v_code := new_event_registration_code();
-  insert into event_registrations (event_id, registration_code, full_name, email, phone, status, amount, admin_note, source, reviewed_by, reviewed_at)
-  values (p_event, v_code, btrim(p_full_name), v_email, btrim(p_phone), 'confirmed', v_e.fee, p_note, 'admin', auth.uid(), now());
+  insert into event_registrations (event_id, registration_code, full_name, email, phone, age, status, amount, admin_note, source, reviewed_by, reviewed_at)
+  values (p_event, v_code, btrim(p_full_name), v_email, btrim(p_phone), p_age, 'confirmed', v_e.fee, p_note, 'admin', auth.uid(), now());
 
   insert into admin_logs (admin_id, action, details)
     values (auth.uid(), 'Added event registration manually', jsonb_build_object('event', v_e.slug, 'registration', v_code));
@@ -390,9 +389,9 @@ create policy "own event registrations" on public.event_registrations for select
 
 revoke all on function public.sync_event_registered_count() from public, anon, authenticated;
 revoke all on function public.new_event_registration_code() from public, anon, authenticated;
-grant execute on function public.register_for_event(uuid, text, text, text, jsonb, text, text) to anon, authenticated;
+grant execute on function public.register_for_event(uuid, text, text, text, integer, jsonb, text, text) to anon, authenticated;
 revoke execute on function public.admin_review_event_payment(uuid, boolean, text) from anon;
-revoke execute on function public.admin_add_event_registration(uuid, text, text, text, text) from anon;
+revoke execute on function public.admin_add_event_registration(uuid, text, text, text, integer, text) from anon;
 revoke execute on function public.admin_cancel_event_registration(uuid, text) from anon;
 
 -- =====================================================================

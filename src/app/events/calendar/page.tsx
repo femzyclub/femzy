@@ -13,8 +13,8 @@ import type { CalendarEvent } from "@/lib/events/types";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Events Calendar — Femrise!",
-  description: "Every Femrise event in one monthly calendar. Pick a date to see what's on.",
+  title: "Events Calendar — Femzy",
+  description: "Every Femzy event in one monthly calendar. Pick a date to see what's on.",
   alternates: { canonical: "/events/calendar" },
 };
 
@@ -36,7 +36,7 @@ export default async function EventsCalendarPage() {
     <>
       {isDemo && <DemoBanner />}
       <Navbar />
-      <main className="pt-[72px] lg:pt-[84px]">
+      <main className="pt-[88px] lg:pt-[96px]">
         <section className="relative overflow-hidden pb-8 pt-16 lg:pt-20">
           <Blob seed={23} color="#1748E8" wobble={0.35} className="absolute -right-10 top-6 w-40 sm:w-56" />
           <Blob seed={9} color="#FBBE18" className="absolute -left-40 -top-20 hidden w-[380px] opacity-80 lg:block" />
@@ -46,7 +46,7 @@ export default async function EventsCalendarPage() {
               What&apos;s <span className="font-hand font-normal text-fr-green">on?</span>
             </h1>
             <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-fr-charcoal">
-              Every Femrise event, month by month. Tap a date to see what&apos;s happening, or an event to register.
+              Every Femzy event, month by month. Tap a date to see what&apos;s happening, or an event to register.
             </p>
             <div className="mt-8">
               <EventsTabs active="calendar" />

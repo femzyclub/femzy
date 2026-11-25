@@ -13,9 +13,6 @@ type Props = {
   event: { id: string; slug: string; title: string; fee: number; formFields: EventFormField[] };
   state: RegistrationState;
   isDemo: boolean;
-  signedIn: boolean;
-  prefill: { fullName: string; email: string; phone: string };
-  existing: { code: string; status: string } | null;
   upi: { qrFiles: string[]; upiId: string; upiName: string };
 };
 
@@ -29,11 +26,12 @@ const CLOSED_COPY: Record<Exclude<RegistrationState, "open">, string> = {
   past: "This event has already happened. See you at the next one!",
 };
 
-export function RegistrationForm({ event, state, isDemo, signedIn, prefill, existing, upi }: Props) {
-  const [done, setDone] = useState<Done | null>(existing ? { code: existing.code, status: existing.status as Done["status"] } : null);
-  const [fullName, setFullName] = useState(prefill.fullName);
-  const [email, setEmail] = useState(prefill.email);
-  const [phone, setPhone] = useState(prefill.phone);
+export function RegistrationForm({ event, state, isDemo, upi }: Props) {
+  const [done, setDone] = useState<Done | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [age, setAge] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [utr, setUtr] = useState("");
   const [proof, setProof] = useState<File | null>(null);
@@ -44,7 +42,7 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
   const paid = event.fee > 0;
   const qrSrc = upi.qrFiles[qrIndex] ?? null;
   const upiLink = upi.upiId
-    ? `upi://pay?pa=${encodeURIComponent(upi.upiId)}&pn=${encodeURIComponent(upi.upiName || "FemRise")}&am=${event.fee}&cu=INR&tn=${encodeURIComponent(event.title.slice(0, 40))}`
+    ? `upi://pay?pa=${encodeURIComponent(upi.upiId)}&pn=${encodeURIComponent(upi.upiName || "Femzy")}&am=${event.fee}&cu=INR&tn=${encodeURIComponent(event.title.slice(0, 40))}`
     : null;
 
   if (done) return <Confirmation done={done} title={event.title} email={email} />;
@@ -77,6 +75,7 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
     if (fullName.trim().length < 2) return setError("Please enter your full name.");
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setError("Please enter a valid email address.");
     if (!/^\+?[0-9][0-9 -]{6,19}$/.test(phone.trim())) return setError("Please enter a valid phone number.");
+    if (!Number.isInteger(Number(age)) || Number(age) < 1 || Number(age) > 120) return setError("Please enter a valid age.");
     for (const f of event.formFields) {
       if (f.required && !(answers[f.id] ?? "").trim()) return setError(`Please fill in: ${f.label}.`);
     }
@@ -89,6 +88,7 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
     body.set("fullName", fullName.trim());
     body.set("email", email.trim());
     body.set("phone", phone.trim());
+    body.set("age", age);
     body.set("answers", JSON.stringify(answers));
     if (paid) {
       body.set("utr", utr.replace(/\s/g, ""));
@@ -123,15 +123,7 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
               ? `Entry is ${feeLabel(event.fee)}. Pay by GPay / any UPI app, then add the transaction ID and screenshot. Your spot is held while we verify it.`
               : "It's free — just tell us who's coming."}
           </p>
-          {!signedIn && (
-            <p className="mt-4 text-[14px] text-fr-charcoal">
-              Already part of Femrise?{" "}
-              <Link href={`/login?next=/events/${event.slug}`} className="font-bold underline decoration-fr-yellow decoration-[3px] underline-offset-4">
-                Log in
-              </Link>{" "}
-              to fill this in faster. Or register as a guest.
-            </p>
-          )}
+          <p className="mt-4 text-[14px] text-fr-charcoal">No account needed — complete this form and you&apos;re registered.</p>
         </div>
 
         <form onSubmit={submit} className="space-y-5" noValidate>
@@ -144,6 +136,9 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
             </Field>
             <Field label="Phone" required>
               <input className="field" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="98765 43210" maxLength={20} required />
+            </Field>
+            <Field label="Age" required>
+              <input className="field" type="number" value={age} onChange={(e) => setAge(e.target.value)} min={1} max={120} inputMode="numeric" required />
             </Field>
             {event.formFields.map((f) => (
               <Field key={f.id} label={f.label} required={f.required} className={clsx((f.type === "textarea" || f.type === "checkbox") && "sm:col-span-2")}>
@@ -208,7 +203,7 @@ export function RegistrationForm({ event, state, isDemo, signedIn, prefill, exis
             </button>
             {!busy && <Burst className="absolute -right-9 top-1/2 h-9 w-9 -translate-y-1/2" />}
           </span>
-          <p className="text-[12px] text-fr-muted">Your details are only shared with the Femrise team running this event.</p>
+          <p className="text-[12px] text-fr-muted">Your details are only shared with the Femzy team running this event.</p>
         </form>
       </div>
     </div>

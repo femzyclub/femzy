@@ -8,7 +8,7 @@ import { mapEvent, type EventRow } from "@/lib/events/data";
 import { utcToWallTime } from "@/lib/events/time";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Edit event — Femrise! admin", robots: { index: false } };
+export const metadata: Metadata = { title: "Edit event — Femzy admin", robots: { index: false } };
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

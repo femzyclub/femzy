@@ -15,7 +15,7 @@ import type { EventRegistrationRow } from "@/lib/events/types";
 import { removeRegistration, reviewEventPayment, setEventStatus, toggleFeatured } from "../actions";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Manage event — Femrise! admin", robots: { index: false } };
+export const metadata: Metadata = { title: "Manage event — Femzy admin", robots: { index: false } };
 
 const FILTERS = [
   ["active", "Registered"],
@@ -212,6 +212,7 @@ export default async function ManageEventPage({
                           <span className="font-mono">{r.registration_code}</span>
                         </Dt>
                         <Dt label="Registered">{formatDateTime(r.created_at)}</Dt>
+                        <Dt label="Age">{r.age}</Dt>
                         {r.amount > 0 && <Dt label="Amount">₹{r.amount}</Dt>}
                         {r.utr && (
                           <Dt label="UTR">

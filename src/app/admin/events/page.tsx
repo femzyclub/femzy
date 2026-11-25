@@ -12,7 +12,7 @@ import { formatDateTime } from "@/lib/events/time";
 import type { EventItem } from "@/lib/events/types";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Events — Femrise! admin", robots: { index: false } };
+export const metadata: Metadata = { title: "Events — Femzy admin", robots: { index: false } };
 
 const TABS = [
   ["all", "All"],

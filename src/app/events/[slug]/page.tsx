@@ -12,9 +12,8 @@ import { env } from "@/lib/env";
 import { getPublicEventBySlug } from "@/lib/events/data";
 import { feeLabel, registrationState, seatsLeft } from "@/lib/events/shared";
 import { formatDateTime, formatRange, tzLabel } from "@/lib/events/time";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-// Rendered per request so signed-in members see their own registration and get their details pre-filled.
+// Rendered per request so registration availability is always current.
 export const dynamic = "force-dynamic";
 
 const QR_FILES = ["/payments/upi-qr.jpeg", "/payments/upi-qr.jpg", "/payments/upi-qr.png"];
@@ -24,11 +23,11 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const { event } = await getPublicEventBySlug(slug);
-  if (!event) return { title: "Event not found — Femrise!" };
-  const description = (event.summary || event.description).slice(0, 160) || `${event.title} — a Femrise event.`;
-  const images = [event.coverUrl ?? "/brand/femrise-logo.png"];
+  if (!event) return { title: "Event not found — Femzy" };
+  const description = (event.summary || event.description).slice(0, 160) || `${event.title} — a Femzy event.`;
+  const images = [event.coverUrl ?? "/brand/femzy_logo.png"];
   return {
-    title: `${event.title} — Femrise! Events`,
+    title: `${event.title} — Femzy Events`,
     description,
     alternates: { canonical: `/events/${event.slug}` },
     openGraph: { type: "website", title: event.title, description, images },
@@ -41,33 +40,6 @@ export default async function EventPage({ params }: Props) {
   const { slug } = await params;
   const { event, isDemo } = await getPublicEventBySlug(slug);
   if (!event) notFound();
-
-  // Signed-in member? Pre-fill the form and show an existing registration.
-  let prefill = { fullName: "", email: "", phone: "" };
-  let existing: { code: string; status: string } | null = null;
-  let signedIn = false;
-  const supabase = await createSupabaseServerClient();
-  if (supabase && !isDemo) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      signedIn = true;
-      const [{ data: profile }, { data: contact }, { data: reg }] = await Promise.all([
-        supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-        supabase.from("profile_contacts").select("email, phone").eq("user_id", user.id).maybeSingle(),
-        supabase
-          .from("event_registrations")
-          .select("registration_code, status")
-          .eq("event_id", event.id)
-          .eq("user_id", user.id)
-          .neq("status", "cancelled")
-          .maybeSingle(),
-      ]);
-      prefill = { fullName: profile?.full_name ?? "", email: contact?.email ?? user.email ?? "", phone: contact?.phone ?? "" };
-      if (reg) existing = { code: reg.registration_code, status: reg.status };
-    }
-  }
 
   const now = Date.now();
   const state = registrationState(event, now);
@@ -88,8 +60,8 @@ export default async function EventPage({ params }: Props) {
     location: event.isOnline
       ? { "@type": "VirtualLocation", url: `${env.siteUrl}/events/${event.slug}` }
       : { "@type": "Place", name: event.venue ?? place, address: event.location ?? place },
-    image: [event.coverUrl ?? `${env.siteUrl}/brand/femrise-logo.png`],
-    organizer: { "@type": "Organization", name: event.organizerName || "Fem Rise Club", url: env.siteUrl },
+    image: [event.coverUrl ?? `${env.siteUrl}/brand/femzy_logo.png`],
+    organizer: { "@type": "Organization", name: event.organizerName || "Femzy", url: env.siteUrl },
     offers: {
       "@type": "Offer",
       price: event.fee,
@@ -105,7 +77,7 @@ export default async function EventPage({ params }: Props) {
       {isDemo && <DemoBanner />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Navbar />
-      <main className="relative overflow-hidden pb-24 pt-[72px] lg:pt-[84px]">
+      <main className="relative overflow-hidden pb-24 pt-[88px] lg:pt-[96px]">
         <Blob seed={5} color="#FBBE18" className="absolute -right-32 top-10 w-[460px] opacity-90" />
         <div className="container-x relative pt-8">
           <Link href="/events" className="inline-flex items-center gap-1.5 text-[14px] font-bold underline decoration-fr-yellow decoration-[3px] underline-offset-4">
@@ -157,7 +129,7 @@ export default async function EventPage({ params }: Props) {
                 <section className="mt-12">
                   <span className="eyebrow">Organiser</span>
                   <div className="card-pop mt-5 bg-white p-5">
-                    <p className="font-display text-xl font-bold">{event.organizerName || "Fem Rise Club"}</p>
+                    <p className="font-display text-xl font-bold">{event.organizerName || "Femzy"}</p>
                     <ul className="mt-2 space-y-1 text-[15px]">
                       {event.organizerEmail && (
                         <li className="flex items-center gap-2">
@@ -210,7 +182,7 @@ export default async function EventPage({ params }: Props) {
                     </Info>
                   )}
                 </ul>
-                {state === "open" && !existing && (
+                {state === "open" && (
                   <a href="#register" className="btn-primary mt-6 w-full">
                     Register now{event.fee > 0 ? ` — ${feeLabel(event.fee)}` : ""}
                   </a>
@@ -224,9 +196,6 @@ export default async function EventPage({ params }: Props) {
               event={{ id: event.id, slug: event.slug, title: event.title, fee: event.fee, formFields: event.formFields }}
               state={state}
               isDemo={isDemo}
-              signedIn={signedIn}
-              prefill={prefill}
-              existing={existing}
               upi={{ qrFiles: QR_FILES, upiId: env.upiId, upiName: env.upiName }}
             />
           </section>

@@ -9,7 +9,7 @@ export type EventRegistrationStatus = "pending_payment" | "confirmed" | "cancell
 export const FORM_FIELD_TYPES = ["text", "textarea", "number", "select", "checkbox"] as const;
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[number];
 
-/** A custom question on the registration form (name, email and phone are always asked). */
+/** A custom question on the registration form (name, email, phone and age are always asked). */
 export interface EventFormField {
   id: string;
   label: string;
@@ -83,6 +83,7 @@ export interface EventRegistrationRow {
   full_name: string;
   email: string;
   phone: string;
+  age: number;
   answers: Record<string, string>;
   status: EventRegistrationStatus;
   amount: number;

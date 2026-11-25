@@ -101,7 +101,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
           <L label="Event title" required className="sm:col-span-2">
             <input name="title" className="field" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} required />
           </L>
-          <L label="URL" hint={`femrise…/events/${slug || "your-event"}`}>
+          <L label="URL" hint={`femzy…/events/${slug || "your-event"}`}>
             <input
               name="slug"
               className="field font-mono"
@@ -182,7 +182,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
 
       <Card title="Registration">
         <div className="grid gap-5 sm:grid-cols-2">
-          <L label="Registration fee (₹)" hint="0 = free. Paid events use the existing GPay / UPI QR.">
+          <L label="Registration fee (₹)" hint="0 = free. Paid registrations currently use UPI verification; Razorpay can be connected once its account keys are ready.">
             <input type="number" name="fee" min={0} max={100000} step={1} className="field" value={fee} onChange={(e) => setFee(e.target.value)} />
           </L>
           <L
@@ -200,7 +200,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
         </div>
       </Card>
 
-      <Card title="Extra registration questions" note="Name, email and phone are always asked. Add anything else you need.">
+      <Card title="Extra registration questions" note="Name, email, phone and age are always asked. Add any event-specific details you need.">
         {fields.length === 0 && <p className="text-[14px] text-fr-muted">No extra questions.</p>}
         <ul className="space-y-4">
           {fields.map((f, i) => (
@@ -306,7 +306,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
       <Card title="Organiser" note="Shown publicly on the event page.">
         <div className="grid gap-5 sm:grid-cols-3">
           <L label="Name">
-            <input name="organizer_name" className="field" defaultValue={initial.organizerName} placeholder="Fem Rise Club" maxLength={120} />
+            <input name="organizer_name" className="field" defaultValue={initial.organizerName} placeholder="Femzy" maxLength={120} />
           </L>
           <L label="Email">
             <input name="organizer_email" type="email" className="field" defaultValue={initial.organizerEmail} maxLength={200} />

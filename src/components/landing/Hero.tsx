@@ -18,14 +18,15 @@ export function Hero({ upcoming, upcomingCount }: { upcoming: EventItem[]; upcom
   const offsets = ["lg:translate-x-6", "lg:-translate-x-4", "lg:translate-x-10"];
 
   return (
-    <section className="relative overflow-hidden pb-20 pt-28 lg:pb-28 lg:pt-36">
+    <section className="relative overflow-hidden bg-fr-warm pb-20 pt-32 lg:pb-28 lg:pt-40">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(251,190,24,0.2),transparent_25%),radial-gradient(circle_at_18%_78%,rgba(98,185,70,0.1),transparent_28%)]" aria-hidden />
       <Blob seed={3} color="#FBBE18" className="absolute -right-40 -top-24 w-[640px] opacity-95 lg:-right-20" />
       <Blob seed={21} color="#62B946" wobble={0.35} className="absolute bottom-10 left-[44%] hidden w-24 lg:block" />
       <Blob seed={11} color="#1748E8" wobble={0.35} className="absolute -left-10 top-40 hidden w-20 sm:block" />
 
       <div className="container-x relative grid items-center gap-14 lg:grid-cols-[1.05fr_1fr]">
         <div className="relative z-10 min-w-0">
-          <span className="eyebrow">Fem Rise Club · events for women who play</span>
+          <span className="eyebrow">Femzy · events for women who play</span>
           <h1 className="h-display mt-6 text-[3.4rem] sm:text-7xl lg:text-[5.6rem]">
             Find your{" "}
             <span className="relative inline-block">

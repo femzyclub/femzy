@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (error) return new NextResponse(error.message, { status: 500 });
 
   const fields = asFormFields(event.form_fields);
-  const header = ["Registration ID", "Name", "Email", "Phone", "Status", "Amount (₹)", "UTR", "Registered at (IST)", "Source", "Member", ...fields.map((f) => f.label), "Admin note"];
+  const header = ["Registration ID", "Name", "Email", "Phone", "Age", "Status", "Amount (₹)", "UTR", "Registered at (IST)", "Source", "Member", ...fields.map((f) => f.label), "Admin note"];
   const lines = [header.map(cell).join(",")];
   for (const r of (data ?? []) as EventRegistrationRow[]) {
     lines.push(
@@ -41,6 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         r.full_name,
         r.email,
         r.phone,
+        r.age,
         STATUS_LABEL[r.status] ?? r.status,
         r.amount,
         r.utr,

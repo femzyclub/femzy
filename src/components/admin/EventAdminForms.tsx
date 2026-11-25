@@ -39,7 +39,7 @@ export function AddRegistrationForm({ eventId }: { eventId: string }) {
     if (state?.code) ref.current?.reset();
   }, [state]);
   return (
-    <form ref={ref} action={action} className="grid gap-3 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end">
+    <form ref={ref} action={action} className="grid gap-3 sm:grid-cols-[1fr_1fr_160px_100px_auto] sm:items-end">
       <input type="hidden" name="event_id" value={eventId} />
       <label>
         <span className="label-field">Name</span>
@@ -53,11 +53,15 @@ export function AddRegistrationForm({ eventId }: { eventId: string }) {
         <span className="label-field">Phone</span>
         <input name="phone" type="tel" className="field !py-2.5" required maxLength={20} />
       </label>
+      <label>
+        <span className="label-field">Age</span>
+        <input name="age" type="number" className="field !py-2.5" required min={1} max={120} />
+      </label>
       <button type="submit" disabled={pending} className="btn-primary !py-2.5 disabled:opacity-60">
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />} Add
       </button>
       <input name="note" className="field !py-2.5 sm:col-span-3" placeholder="Note (optional), e.g. paid cash at the desk" maxLength={300} />
-      <div className="sm:col-span-4">
+      <div className="sm:col-span-5">
         {state?.error && <p className="text-[14px] font-bold text-fr-red">{state.error}</p>}
         {state?.code && (
           <p className="text-[14px] font-bold">

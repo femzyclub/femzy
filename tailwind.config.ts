@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * FEMRISE! design system
+ * FEMZY design system
  * Warm White + Black → structure · Yellow → energy · Blue → excitement · Green → health · Orange → warmth
  */
 const config: Config = {

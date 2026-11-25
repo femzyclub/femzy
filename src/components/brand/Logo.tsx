@@ -2,19 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
 
-/**
- * Official Fem Rise logo. Use tone="dark" on light backgrounds (black stroke)
- * and tone="light" on dark backgrounds (white stroke). Coloured dots and the
- * yellow wordmark stay the same in both.
- */
+/** Official Femzy logo. */
 export function Logo({
-  tone = "dark",
   size = 44,
   withLink = true,
   className,
   priority,
 }: {
-  tone?: "dark" | "light";
   size?: number;
   withLink?: boolean;
   className?: string;
@@ -22,17 +16,17 @@ export function Logo({
 }) {
   const img = (
     <Image
-      src={tone === "dark" ? "/brand/femrise-logo.png" : "/brand/femrise-logo-light.png"}
-      alt="Fem Rise Club"
+      src="/brand/femzy_logo.png"
+      alt="Femzy"
       width={size}
-      height={Math.round(size * (852 / 860))}
+      height={Math.round(size * (1350 / 1080))}
       priority={priority}
       className={clsx("select-none", className)}
     />
   );
   if (!withLink) return img;
   return (
-    <Link href="/" aria-label="Fem Rise Club home" className="inline-flex shrink-0">
+    <Link href="/" aria-label="Femzy home" className="inline-flex shrink-0">
       {img}
     </Link>
   );
