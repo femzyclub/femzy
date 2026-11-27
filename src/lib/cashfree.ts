@@ -56,7 +56,7 @@ export async function createCashfreeOrder({ orderId, amount, customer, idempoten
   customer: { id: string; name: string; email: string; phone: string };
   idempotencyKey: string;
 }) {
-  if (!isCashfreeConfigured) throw new Error("Cashfree is not configured.");
+  if (!isCashfreeConfigured()) throw new Error("Cashfree is not configured.");
   requireOrderId(orderId);
   const response = await fetch(`${apiBaseUrl()}/orders`, {
     method: "POST",
@@ -86,7 +86,7 @@ export async function createCashfreeOrder({ orderId, amount, customer, idempoten
 
 /** Verifies all payment facts with Cashfree; browser and webhook values are never trusted. */
 export async function verifyCashfreeOrder(orderId: string): Promise<CashfreeOrderVerification> {
-  if (!isCashfreeConfigured) throw new Error("Cashfree is not configured.");
+  if (!isCashfreeConfigured()) throw new Error("Cashfree is not configured.");
   requireOrderId(orderId);
   const orderResponse = await fetch(`${apiBaseUrl()}/orders/${encodeURIComponent(orderId)}`, { headers: headers(), cache: "no-store" });
   const order = await responseJson<CashfreeOrder>(orderResponse);
@@ -108,7 +108,7 @@ export async function verifyCashfreeOrder(orderId: string): Promise<CashfreeOrde
 }
 
 export async function createCashfreeRefund({ orderId, amount, reason }: { orderId: string; amount: number; reason: string }) {
-  if (!isCashfreeConfigured) throw new Error("Cashfree is not configured.");
+  if (!isCashfreeConfigured()) throw new Error("Cashfree is not configured.");
   requireOrderId(orderId);
   const refundId = `rf${orderId.replace(/[^A-Za-z0-9]/g, "").slice(-38)}`;
   const digest = createHash("sha256").update(`refund:${orderId}`).digest("hex");

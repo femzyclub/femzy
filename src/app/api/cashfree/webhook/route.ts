@@ -20,7 +20,7 @@ const HANDLED_EVENTS = new Set(["PAYMENT_SUCCESS_WEBHOOK", "PAYMENT_FAILED_WEBHO
  * before any registration changes, exactly like the browser return.
  */
 export async function POST(request: Request) {
-  if (!isCashfreeConfigured) return new NextResponse("Webhook is not configured", { status: 503 });
+  if (!isCashfreeConfigured()) return new NextResponse("Webhook is not configured", { status: 503 });
   const rawBody = await request.text();
   const timestamp = request.headers.get("x-webhook-timestamp") ?? "";
   const signature = request.headers.get("x-webhook-signature") ?? "";

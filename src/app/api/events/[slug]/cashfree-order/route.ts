@@ -12,12 +12,19 @@ const bad = (error: string, status = 400) => NextResponse.json({ error }, { stat
 class SessionExpiredError extends Error {}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  if (!isCashfreeConfigured) return bad("Online payments are not configured yet.", 503);
+  if (!isCashfreeConfigured()) {
+    // Names only, never values, so the logs show which setting is missing.
+    console.error("[cashfree] missing settings:", { CASHFREE_APP_ID: Boolean(env.cashfreeAppId), CASHFREE_SECRET_KEY: Boolean(env.cashfreeSecretKey) });
+    return bad("Online payments are not available right now. Please try again later.", 503);
+  }
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
   // attach_cashfree_order is service-role only (007_cashfree_payment_hardening.sql).
   const admin = createSupabaseAdminClient();
-  if (!supabase || !admin) return bad("Registrations aren't connected yet.", 503);
+  if (!supabase || !admin) {
+    console.error("[cashfree] missing Supabase settings:", { publicClient: Boolean(supabase), SUPABASE_SECRET_KEY: Boolean(env.supabaseServiceRoleKey) });
+    return bad("Registrations aren't available right now. Please try again later.", 503);
+  }
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return bad("Invalid registration.");
 

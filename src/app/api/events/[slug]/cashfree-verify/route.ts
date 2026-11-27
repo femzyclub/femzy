@@ -11,7 +11,7 @@ const bad = (error: string, status = 400) => NextResponse.json({ error }, { stat
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   await params;
-  if (!isCashfreeConfigured) return bad("Online payments are not configured yet.", 503);
+  if (!isCashfreeConfigured()) return bad("Online payments are not configured yet.", 503);
   const supabase = createSupabaseAdminClient();
   if (!supabase) return bad("Registrations aren't connected yet.", 503);
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;

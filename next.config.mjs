@@ -14,6 +14,14 @@ const nextConfig = {
   outputFileTracingRoot: projectRoot,
   // Dev runs on Turbopack (next dev --turbopack) for much faster compiles.
   turbopack: { root: projectRoot },
+  // Admin forms use Server Actions, which Next.js only accepts from known domains.
+  // Behind Cloudflare the forwarded host can differ, so list the real domains.
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["femzyclub.com", "www.femzyclub.com", "*.workers.dev", "localhost:3000"],
+      bodySizeLimit: "6mb", // posters can be up to 5 MB
+    },
+  },
   images: {
     remotePatterns: supabaseHost
       ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/**" }]

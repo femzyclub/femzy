@@ -35,6 +35,6 @@ export function createSupabasePublicClient() {
  * (payment webhooks, admin jobs). Never import into client components.
  */
 export function createSupabaseAdminClient() {
-  if (!isSupabaseAdminConfigured) return null;
+  if (!isSupabaseAdminConfigured()) return null;
   return createPlainClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false } });
 }

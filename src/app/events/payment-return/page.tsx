@@ -14,7 +14,7 @@ export default async function PaymentReturnPage({ searchParams }: { searchParams
   const orderId = typeof order_id === "string" ? order_id : "";
 
   let result: CashfreeFinalization | null = null;
-  if (isCashfreeConfigured && /^[A-Za-z0-9_-]{3,45}$/.test(orderId)) {
+  if (isCashfreeConfigured() && /^[A-Za-z0-9_-]{3,45}$/.test(orderId)) {
     try {
       result = await verifyAndFinalizeCashfreeOrder(orderId);
     } catch (err) {
