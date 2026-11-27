@@ -165,7 +165,10 @@ export async function saveEvent(_prev: EventFormState, fd: FormData): Promise<Ev
     if ("error" in img) return { error: `Poster: ${img.error}` };
     const path = `${crypto.randomUUID()}.${img.ext}`;
     const { error: upErr } = await supabase.storage.from("event-covers").upload(path, img.body, { contentType: img.type, upsert: false, cacheControl: "31536000" });
-    if (upErr) return { error: `Couldn't upload the poster: ${upErr.message}` };
+    if (upErr) {
+      console.error("[admin] poster upload failed", upErr.message);
+      return { error: "Couldn't upload the poster. Please try a smaller JPG, PNG or WebP image." };
+    }
     coverPath = path;
   } else if (fd.get("remove_cover") === "on") {
     coverPath = null;
@@ -193,8 +196,10 @@ export async function saveEvent(_prev: EventFormState, fd: FormData): Promise<Ev
 
 function friendlyDbError(msg: string) {
   if (/events_slug_key|duplicate key/.test(msg)) return "Another event already uses this URL name. Change the URL name and save again.";
-  if (/row-level security/.test(msg)) return "Only admins can manage events.";
-  return msg;
+  if (/row-level security|permission denied/.test(msg)) return "Only admins can manage events.";
+  if (/violates check constraint/.test(msg)) return "Some details aren't valid. Please check the dates, fee and capacity and try again.";
+  console.error("[admin] event save failed", msg);
+  return "Couldn't save the event. Please try again.";
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +216,10 @@ export async function setEventStatus(fd: FormData) {
   if (status === "cancelled") patch.cancellation_note = note;
   if (status !== "cancelled") patch.cancellation_note = null;
   const { data, error } = await admin.supabase.from("events").update(patch).eq("id", id).select("slug").single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[admin] action failed", error.message);
+    throw new Error("Something went wrong while saving. Please refresh the page and try again.");
+  }
   refreshPublic(data.slug);
 }
 
@@ -225,7 +233,10 @@ export async function toggleFeatured(fd: FormData) {
     .eq("id", id)
     .select("slug")
     .single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[admin] action failed", error.message);
+    throw new Error("Something went wrong while saving. Please refresh the page and try again.");
+  }
   refreshPublic(data.slug);
 }
 
@@ -240,7 +251,10 @@ export async function deleteEvent(_prev: EventFormState, fd: FormData): Promise<
   // Registrations' payment screenshots go too.
   const { data: regs } = await admin.supabase.from("event_registrations").select("proof_path").eq("event_id", id).not("proof_path", "is", null);
   const { error } = await admin.supabase.from("events").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("[admin] delete event failed", error.message);
+    return { error: "Couldn't delete the event. Please try again." };
+  }
   if (ev.cover_path) await admin.supabase.storage.from("event-covers").remove([ev.cover_path]);
   const proofs = (regs ?? []).map((r) => r.proof_path as string).filter(Boolean);
   if (proofs.length) await admin.supabase.storage.from("event-payment-proofs").remove(proofs);
@@ -265,7 +279,10 @@ export async function reviewEventPayment(fd: FormData) {
     p_approve: fd.get("decision") === "approve",
     p_note: opt(fd, "note", 300),
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[admin] action failed", error.message);
+    throw new Error("Something went wrong while saving. Please refresh the page and try again.");
+  }
   refreshPublic(await eventSlug(admin.supabase, str(fd, "event_id", 64)));
 }
 
@@ -276,7 +293,10 @@ export async function removeRegistration(fd: FormData) {
     p_registration: str(fd, "id", 64),
     p_note: opt(fd, "note", 300),
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[admin] action failed", error.message);
+    throw new Error("Something went wrong while saving. Please refresh the page and try again.");
+  }
   refreshPublic(await eventSlug(admin.supabase, str(fd, "event_id", 64)));
 }
 
@@ -300,7 +320,11 @@ export async function addRegistration(_prev: AddRegistrationState, fd: FormData)
     p_age: age,
     p_note: opt(fd, "note", 300),
   });
-  if (error) return { error: registrationErrorMessage(error.message) ?? error.message };
+  if (error) {
+    const friendly = registrationErrorMessage(error.message);
+    if (!friendly) console.error("[admin] add registration failed", error.message);
+    return { error: friendly ?? "Couldn't add this person. Please try again." };
+  }
   refreshPublic(await eventSlug(admin.supabase, eventId));
   return { code: String(data) };
 }

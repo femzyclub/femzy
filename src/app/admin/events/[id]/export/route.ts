@@ -29,7 +29,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (status === "active") q = q.in("status", ["confirmed", "pending_payment"]);
   else if (["confirmed", "pending_payment", "cancelled"].includes(status)) q = q.eq("status", status);
   const { data, error } = await q;
-  if (error) return new NextResponse(error.message, { status: 500 });
+  if (error) {
+    console.error("[admin] export failed", error.message);
+    return new NextResponse("Couldn't export the registrations. Please try again.", { status: 500 });
+  }
 
   const fields = asFormFields(event.form_fields);
   const header = ["Registration ID", "Name", "Email", "Phone", "Age", "Status", "Amount (₹)", "UTR", "Registered at (IST)", "Source", "Member", ...fields.map((f) => f.label), "Admin note"];

@@ -228,7 +228,7 @@ export default async function ManageEventPage({
                       {r.admin_note && <p className="mt-2 text-[13px] text-fr-muted">Note: {r.admin_note}</p>}
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
-                        {r.status === "pending_payment" && <p className="text-[13px] font-bold text-fr-charcoal">Awaiting Razorpay payment. Unfinished checkout sessions expire automatically.</p>}
+                        {r.status === "pending_payment" && <p className="text-[13px] font-bold text-fr-charcoal">Awaiting Cashfree payment. Unfinished checkout sessions expire automatically.</p>}
                         {r.status === "confirmed" && (
                           <form action={removeRegistration}>
                             <input type="hidden" name="id" value={r.id} />

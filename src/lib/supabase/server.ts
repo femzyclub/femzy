@@ -36,5 +36,5 @@ export function createSupabasePublicClient() {
  */
 export function createSupabaseAdminClient() {
   if (!isSupabaseAdminConfigured) return null;
-  return createPlainClient(env.supabaseUrl, env.supabaseSecretKey, { auth: { persistSession: false } });
+  return createPlainClient(env.supabaseUrl, env.supabaseServiceRoleKey, { auth: { persistSession: false } });
 }

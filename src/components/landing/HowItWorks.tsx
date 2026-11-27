@@ -7,7 +7,7 @@ import { Arrow } from "@/components/doodle/Doodles";
 
 const steps = [
   { n: "01", t: "Find an event", d: "Browse upcoming events or open the calendar to see what's on each day. Filter by sport, workshop or meetup.", Icon: Search, bg: "#FBBE18", rot: -2 },
-  { n: "02", t: "Register online", d: "Free events take a minute. Paid ones use secure Razorpay Checkout. No account needed — you get a registration ID instantly.", Icon: Ticket, bg: "#DCE8FF", rot: 1.5 },
+  { n: "02", t: "Register online", d: "Free events take a minute. Paid ones use secure Cashfree Checkout. No account needed — you get a registration ID instantly.", Icon: Ticket, bg: "#DCE8FF", rot: 1.5 },
   { n: "03", t: "Show up & play", d: "Bring your registration ID, meet the community and play. Then pick your next one.", Icon: PartyPopper, bg: "#E5F4DF", rot: -1 },
 ];
 

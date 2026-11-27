@@ -83,6 +83,20 @@ export function registrationErrorMessage(raw: string) {
       return "Please upload the payment screenshot.";
     case "UTR_USED":
       return "This UPI transaction ID has already been used.";
+    case "INVALID_NAME":
+      return "Please enter your full name.";
+    case "INVALID_EMAIL":
+      return "Please enter a valid email address.";
+    case "INVALID_PHONE":
+      return "Please enter a valid phone number.";
+    case "PAYMENT_REQUIRED":
+      return "This event needs payment. Please refresh the page and try again.";
+    case "PAYMENT_SESSION_EXPIRED":
+      return "Your payment session expired. Please try again.";
+    case "Admins only":
+      return "Only admins can do this.";
+    case "FREE_EVENT":
+      return "This event is free, so no payment is needed. Please refresh the page and register again.";
     default:
       return null;
   }

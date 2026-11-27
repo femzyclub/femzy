@@ -45,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   const { data: event } = await supabase.from("events").select("id, fee, status").eq("slug", slug).eq("status", "published").maybeSingle();
   if (!event) return bad("This event isn't open for registration.", 404);
-  if (event.fee > 0) return bad("Paid event registrations must be completed through Razorpay.", 409);
+  if (event.fee > 0) return bad("Paid event registrations must be completed through Cashfree.", 409);
 
   // Free events are confirmed immediately.
   const { data, error } = await supabase.rpc("register_for_event", {

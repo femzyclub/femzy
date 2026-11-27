@@ -17,21 +17,22 @@ type Props = {
 
 type Done = { code: string; status: "confirmed" };
 
-type RazorpayResponse = { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string };
-type RazorpayCheckout = { open: () => void; on: (event: string, listener: (response: { error?: { description?: string } }) => void) => void };
+type CashfreeCheckout = {
+  checkout: (options: { paymentSessionId: string; redirectTarget: "_modal" }) => Promise<{ error?: { message?: string }; paymentDetails?: unknown; redirect?: boolean }>;
+};
 declare global {
   interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout;
+    Cashfree?: (options: { mode: "sandbox" | "production" }) => CashfreeCheckout;
   }
 }
 
-function loadRazorpayCheckout() {
-  if (window.Razorpay) return Promise.resolve();
+function loadCashfreeCheckout() {
+  if (window.Cashfree) return Promise.resolve();
   return new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Could not load the Razorpay checkout. Please check your connection and try again."));
+    script.onerror = () => reject(new Error("Could not load the Cashfree checkout. Please check your connection and try again."));
     document.head.appendChild(script);
   });
 }
@@ -89,40 +90,28 @@ export function RegistrationForm({ event, state, isDemo }: Props) {
     setBusy(true);
     try {
       if (paid) {
-        const orderRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/razorpay-order`, {
+        const orderRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/cashfree-order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), phone: phone.trim(), age: Number(age), answers }),
         });
-        const order = (await orderRes.json().catch(() => ({}))) as { registrationId?: string; orderId?: string; amount?: number; currency?: string; keyId?: string; title?: string; email?: string; phone?: string; error?: string };
-        if (!orderRes.ok || !order.registrationId || !order.orderId || !order.keyId) throw new Error(order.error || "Couldn't begin the payment. Please try again.");
-        await loadRazorpayCheckout();
-        if (!window.Razorpay) throw new Error("Razorpay checkout could not start. Please try again.");
-        const checkout = new window.Razorpay({
-          key: order.keyId,
-          amount: order.amount,
-          currency: order.currency,
-          name: "Femzy",
-          description: order.title,
-          order_id: order.orderId,
-          prefill: { name: fullName.trim(), email: order.email, contact: order.phone },
-          theme: { color: "#1748E8" },
-          handler: async (response: RazorpayResponse) => {
-            try {
-              const verifyRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/razorpay-verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ registrationId: order.registrationId, ...response }) });
-              const verified = (await verifyRes.json().catch(() => ({}))) as { code?: string; error?: string };
-              if (!verifyRes.ok || !verified.code) throw new Error(verified.error || "Payment verification failed.");
-              setDone({ code: verified.code, status: "confirmed" });
-              window.scrollTo({ top: (document.getElementById("register")?.offsetTop ?? 0) - 100, behavior: "smooth" });
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "Payment verification failed. Please contact Femzy with your payment ID.");
-            } finally {
-              setBusy(false);
-            }
-          },
+        const order = (await orderRes.json().catch(() => ({}))) as { registrationId?: string; paymentSessionId?: string; environment?: "sandbox" | "production"; error?: string };
+        if (!orderRes.ok || !order.registrationId || !order.paymentSessionId || !order.environment) throw new Error(order.error || "Couldn't begin the payment. Please try again.");
+        await loadCashfreeCheckout();
+        if (!window.Cashfree) throw new Error("Cashfree checkout could not start. Please try again.");
+        const result = await window.Cashfree({ mode: order.environment }).checkout({ paymentSessionId: order.paymentSessionId, redirectTarget: "_modal" });
+        // Cashfree's own error text can be technical, so show a plain message instead.
+        if (result.error) throw new Error("The payment was not completed. You can try again.");
+
+        const verifyRes = await fetch(`/api/events/${encodeURIComponent(event.slug)}/cashfree-verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registrationId: order.registrationId }),
         });
-        checkout.on("payment.failed", (response) => { setBusy(false); setError(response.error?.description || "Payment was not completed. You can try again."); });
-        checkout.open();
+        const verified = (await verifyRes.json().catch(() => ({}))) as { code?: string; error?: string };
+        if (!verifyRes.ok || !verified.code) throw new Error(verified.error || "Payment is still being confirmed. Please check your email or contact Femzy with your payment details.");
+        setDone({ code: verified.code, status: "confirmed" });
+        window.scrollTo({ top: (document.getElementById("register")?.offsetTop ?? 0) - 100, behavior: "smooth" });
         return;
       }
       const res = await fetch(`/api/events/${encodeURIComponent(event.slug)}/register`, { method: "POST", body });
@@ -131,7 +120,9 @@ export function RegistrationForm({ event, state, isDemo }: Props) {
       setDone({ code: json.code, status: json.status ?? "confirmed" });
       window.scrollTo({ top: (document.getElementById("register")?.offsetTop ?? 0) - 100, behavior: "smooth" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      // fetch() throws a TypeError ("Failed to fetch") when the connection drops.
+      if (err instanceof TypeError) setError("We couldn't reach the server. Please check your internet connection and try again.");
+      else setError(err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -148,7 +139,7 @@ export function RegistrationForm({ event, state, isDemo }: Props) {
           </h2>
           <p className="mt-4 text-[15px] text-fr-charcoal">
             {paid
-              ? `Entry is ${feeLabel(event.fee)}. Complete payment securely with Razorpay to confirm your spot.`
+              ? `Entry is ${feeLabel(event.fee)}. Complete payment securely with Cashfree to confirm your spot.`
               : "It's free — just tell us who's coming."}
           </p>
           <p className="mt-4 text-[14px] text-fr-charcoal">No account needed — complete this form and you&apos;re registered.</p>

@@ -182,7 +182,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
 
       <Card title="Registration">
         <div className="grid gap-5 sm:grid-cols-2">
-          <L label="Registration fee (₹)" hint="0 = free. Paid registrations use Razorpay Checkout and are confirmed automatically after payment.">
+          <L label="Registration fee (₹)" hint="0 = free. Paid registrations use Cashfree Checkout and are confirmed automatically after payment.">
             <input type="number" name="fee" min={0} max={100000} step={1} className="field" value={fee} onChange={(e) => setFee(e.target.value)} />
           </L>
           <L
@@ -327,7 +327,7 @@ export function EventForm({ initial }: { initial: EventFormValues }) {
           </>
         )}
         {initial.status === "published" && <Submit intent="draft" label="Save & unpublish" pending={pending} />}
-        <span className="text-[13px] text-fr-muted">{Number(fee) > 0 ? "Paid event · Razorpay Checkout" : "Free event"}</span>
+        <span className="text-[13px] text-fr-muted">{Number(fee) > 0 ? "Paid event · Cashfree Checkout" : "Free event"}</span>
       </div>
     </form>
   );

@@ -21,7 +21,7 @@ export function LoginForm({ next, supabaseReady }: { next: string; supabaseReady
     setError(null);
     const { error: err } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (err) return setError(err.message);
+    if (err) return setError(/invalid login credentials/i.test(err.message) ? "Incorrect email or password." : "Couldn't log you in right now. Please try again.");
     router.replace(next);
     router.refresh();
   }
